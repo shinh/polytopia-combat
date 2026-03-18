@@ -35,6 +35,9 @@
       input {
         padding: 0.35rem 0.5rem;
       }
+      .hp-input {
+        width: 4.5rem;
+      }
       ul {
         list-style: none;
         padding: 0;
@@ -117,10 +120,11 @@
         <thead>
           <tr>
             <th>#</th>
+            <th>Attacker</th>
             <th>Defender</th>
-            <th>Initial HP</th>
+            <th>Defender HP Before</th>
             <th>Damage Taken (rounded / raw)</th>
-            <th>Remaining HP (rounded / raw)</th>
+            <th>Defender HP After (rounded / raw)</th>
           </tr>
         </thead>
         <tbody id="resultBody"></tbody>
@@ -273,15 +277,17 @@
           label.textContent = `${unit.name} (HP ${unit.hp})`;
           const meta = document.createElement('div');
           meta.className = 'unit-meta';
-          if (side === 'attackers') {
-            meta.textContent = `splash: ${unit.splash ? 'on' : 'off'}`;
-          } else {
+          if (side === 'defenders') {
             const bonus = calcDefenseBonus(unit.defenseMode, unit.pois);
-            meta.textContent = `terrain: ${unit.defenseMode}, pois: ${unit.pois ? 'on' : 'off'}, bonus: x${bonus}`;
+            meta.textContent = `bonus: x${bonus}`;
           }
-          left.append(label, meta);
+          left.append(label);
+          if (meta.textContent) {
+            left.append(meta);
+          }
 
           const hpInput = document.createElement('input');
+          hpInput.className = 'hp-input';
           hpInput.type = 'number';
           hpInput.min = '0';
           hpInput.step = '1';
@@ -308,13 +314,8 @@
               });
               splashLabel.append(splashInput, ' splash');
               controls.appendChild(splashLabel);
-            } else {
-              unit.splash = false;
-              const noSplash = document.createElement('span');
-              noSplash.className = 'unit-meta';
-              noSplash.textContent = 'no splash/explode skill';
-              controls.appendChild(noSplash);
             }
+            unit.splash = Boolean(unit.splash && canSplash(unit.name));
           } else {
             const defenseMode = normalizeDefenseModeForUnit(unit.name, unit.defenseMode);
             unit.defenseMode = defenseMode;
@@ -454,44 +455,74 @@
           })
           .filter(Boolean);
 
+        const rounds = [];
         let defenderIndex = 0;
-        for (const attacker of attackerUnits) {
+        attackerUnits.forEach((attacker, attackerIndex) => {
           while (defenderIndex < defenderUnits.length && defenderUnits[defenderIndex].hp <= 0) {
             defenderIndex += 1;
           }
-          if (defenderIndex >= defenderUnits.length) break;
+          if (defenderIndex >= defenderUnits.length) {
+            rounds.push({
+              index: attackerIndex + 1,
+              attackerName: attacker.name,
+              defenderName: '-',
+              defenderHpBefore: '-',
+              damageTaken: '-',
+              damageTakenRaw: '-',
+              defenderHpAfter: '-',
+              defenderHpAfterRaw: '-',
+            });
+            return;
+          }
 
           const target = defenderUnits[defenderIndex];
+          const defenderHpBefore = target.hp;
+          const defenderHpBeforeRaw = target.hpRaw;
           const result = simulateCombat(attacker, target, attacker.splash);
           attacker.hp = result.attackerHp;
           target.hp = result.defenderHp;
           target.hpRaw = result.defenderHpRaw;
-        }
+          rounds.push({
+            index: attackerIndex + 1,
+            attackerName: attacker.name,
+            defenderName: target.name,
+            defenderHpBefore,
+            damageTaken: defenderHpBefore - result.defenderHp,
+            damageTakenRaw: defenderHpBeforeRaw - result.defenderHpRaw,
+            defenderHpAfter: result.defenderHp,
+            defenderHpAfterRaw: result.defenderHpRaw,
+          });
+        });
 
-        return defenderUnits;
+        return rounds;
       }
 
       function renderResult() {
         resultBody.innerHTML = '';
-        const defenders = computeQueueResult();
+        const rounds = computeQueueResult();
 
-        defenders.forEach((defender, idx) => {
+        rounds.forEach((round) => {
           const tr = document.createElement('tr');
-          const damageTaken = defender.initialHp - defender.hp;
-          const damageTakenRaw = defender.initialHpRaw - defender.hpRaw;
+          const damageText = typeof round.damageTaken === 'number'
+            ? `${round.damageTaken} / ${round.damageTakenRaw.toFixed(2)}`
+            : '-';
+          const hpAfterText = typeof round.defenderHpAfter === 'number'
+            ? `${round.defenderHpAfter} / ${round.defenderHpAfterRaw.toFixed(2)}`
+            : '-';
           tr.innerHTML = `
-            <td>${idx + 1}</td>
-            <td>${defender.name}</td>
-            <td>${defender.initialHp}</td>
-            <td>${damageTaken} / ${damageTakenRaw.toFixed(2)}</td>
-            <td>${defender.hp} / ${defender.hpRaw.toFixed(2)}</td>
+            <td>${round.index}</td>
+            <td>${round.attackerName}</td>
+            <td>${round.defenderName}</td>
+            <td>${round.defenderHpBefore}</td>
+            <td>${damageText}</td>
+            <td>${hpAfterText}</td>
           `;
           resultBody.appendChild(tr);
         });
 
-        if (defenders.length === 0) {
+        if (rounds.length === 0) {
           const tr = document.createElement('tr');
-          tr.innerHTML = '<td colspan="5">No defenders selected</td>';
+          tr.innerHTML = '<td colspan="6">No attackers selected</td>';
           resultBody.appendChild(tr);
         }
       }
