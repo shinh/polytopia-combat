@@ -391,10 +391,11 @@
 
         if (splash) {
           const splashRaw = attackDamageRaw / 2;
+          const splashRounded = Math.floor(attackResult / 2);
           return {
             attackerHp: attacker.hp,
             attackerHpRaw: attacker.hp,
-            defenderHp: clampHp(defender.hp - attackResult / 2, defender.maxHp),
+            defenderHp: clampHp(defender.hp - splashRounded, defender.maxHp),
             defenderHpRaw: clampHp(defender.hp - splashRaw, defender.maxHp),
             attackDamageRaw,
             defenseDamageRaw: 0,

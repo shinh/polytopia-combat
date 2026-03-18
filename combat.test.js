@@ -56,3 +56,13 @@ test('splash damage rounds down when halving odd damage', () => {
   assert.equal(splash.defenderHp, 8);
   assert.equal(splash.attackerHp, 10);
 });
+
+test('fire dragon splash against giant truncates 4.5 to 4 damage', () => {
+  const attacker = { hp: 20, maxHp: 20, attack: 4, defense: 3 };
+  const defender = { hp: 40, maxHp: 40, attack: 5, defense: 4 };
+
+  const splash = simulateCombat(attacker, defender, true);
+
+  assert.equal(splash.defenderHp, 36);
+  assert.equal(splash.attackerHp, 20);
+});
