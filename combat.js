@@ -22,9 +22,10 @@ function simulateCombat(attacker, defender, splash = false) {
     (attackForce / totalDamage) * attacker.attack * 4.5,
   );
 
-  // Splash damage is half of attackResult and does not trigger retaliation.
+  // Splash damage is half of attackResult rounded down and does not trigger retaliation.
   if (splash) {
-    const defenderHpAfter = clampHp(defenderHpBefore - attackResult / 2, defender.maxHp);
+    const splashDamage = Math.floor(attackResult / 2);
+    const defenderHpAfter = clampHp(defenderHpBefore - splashDamage, defender.maxHp);
     return {
       attackerHp: attackerHpBefore,
       defenderHp: defenderHpAfter,

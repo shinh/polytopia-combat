@@ -44,3 +44,15 @@ test('splash=true applies half damage with no retaliation', () => {
   assert.equal(splash.defenderHp, 8);
   assert.equal(splash.attackerHp, 10);
 });
+
+test('splash damage rounds down when halving odd damage', () => {
+  const attacker = { hp: 10, maxHp: 10, attack: 1, defense: 2 };
+  const defender = { hp: 10, maxHp: 10, attack: 2, defense: 0 };
+
+  const normal = simulateCombat(attacker, defender);
+  const splash = simulateCombat(attacker, defender, true);
+
+  assert.equal(normal.defenderHp, 5);
+  assert.equal(splash.defenderHp, 8);
+  assert.equal(splash.attackerHp, 10);
+});
