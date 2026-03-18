@@ -66,14 +66,6 @@ function calculateCombatExchange(attacker, defender, splash = false) {
   };
 }
 
-function simulateCombat(attacker, defender, splash = false) {
-  const result = calculateCombatExchange(attacker, defender, splash);
-  return {
-    attackerHp: result.attackerHp,
-    defenderHp: result.defenderHp,
-  };
-}
-
 function clampHp(hp, maxHp) {
   return Math.max(0, Math.min(maxHp, hp));
 }
@@ -104,7 +96,6 @@ function validateUnit(unit, label) {
 
 const combatApi = {
   calculateCombatExchange,
-  simulateCombat,
 };
 
 if (typeof module !== 'undefined' && module.exports) {
