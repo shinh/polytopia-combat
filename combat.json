@@ -1,0 +1,6 @@
+{
+  "source": "combat.js",
+  "defaultDefenseBonus": 1,
+  "defaultSplash": false,
+  "description": "One-round queue simulation: attackers hit the first alive defender in order."
+}
