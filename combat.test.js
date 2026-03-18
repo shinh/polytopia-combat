@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { simulateCombat } = require('./combat');
+const { calculateCombatExchange, simulateCombat } = require('./combat');
 
 function warrior(overrides = {}) {
   return {
@@ -65,4 +65,15 @@ test('fire dragon splash against giant truncates 4.5 to 4 damage', () => {
 
   assert.equal(splash.defenderHp, 36);
   assert.equal(splash.attackerHp, 20);
+});
+
+test('calculateCombatExchange returns rounded and raw splash values', () => {
+  const attacker = { hp: 20, maxHp: 20, attack: 4, defense: 3 };
+  const defender = { hp: 40, maxHp: 40, attack: 5, defense: 4 };
+
+  const splash = calculateCombatExchange(attacker, defender, true);
+
+  assert.equal(splash.defenderHp, 36);
+  assert.equal(splash.defenderHpRaw, 35.5);
+  assert.equal(splash.attackDamageRaw, 9);
 });

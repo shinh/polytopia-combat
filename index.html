@@ -135,6 +135,7 @@
 
     <script src="./units.json"></script>
     <script src="./combat.json"></script>
+    <script src="./combat.js"></script>
     <script>
       const state = {
         attackers: [],
@@ -151,6 +152,7 @@
       const resultBody = document.getElementById('resultBody');
       const shareUrl = document.getElementById('shareUrl');
       const loadError = document.getElementById('loadError');
+      const combatApi = window.POLYTOPIA_COMBAT;
 
       const DEFENSE_MODES = {
         na: 'na',
@@ -382,49 +384,11 @@
         }
       }
 
-      function simulateCombat(attacker, defender, splash = false) {
-        const attackForce = attacker.attack * (attacker.hp / attacker.maxHp);
-        const defenseForce = defender.defense * (defender.hp / defender.maxHp) * defender.defenseBonus;
-        const totalDamage = attackForce + defenseForce;
-        const attackDamageRaw = (attackForce / totalDamage) * attacker.attack * 4.5;
-        const attackResult = Math.round(attackDamageRaw);
-
-        if (splash) {
-          const splashRaw = attackDamageRaw / 2;
-          const splashRounded = Math.floor(attackResult / 2);
-          return {
-            attackerHp: attacker.hp,
-            attackerHpRaw: attacker.hp,
-            defenderHp: clampHp(defender.hp - splashRounded, defender.maxHp),
-            defenderHpRaw: clampHp(defender.hp - splashRaw, defender.maxHp),
-            attackDamageRaw,
-            defenseDamageRaw: 0,
-          };
-        }
-
-        const defenderHpAfter = clampHp(defender.hp - attackResult, defender.maxHp);
-        const defenderHpRaw = clampHp(defender.hp - attackDamageRaw, defender.maxHp);
-        let attackerHpAfter = attacker.hp;
-        let attackerHpRaw = attacker.hp;
-        let defenseDamageRaw = 0;
-
-        if (defenderHpAfter > 0) {
-          defenseDamageRaw = (defenseForce / totalDamage) * defender.defense * 4.5;
-          const defenseResult = Math.round(defenseDamageRaw);
-          attackerHpAfter = clampHp(attacker.hp - defenseResult, attacker.maxHp);
-          attackerHpRaw = clampHp(attacker.hp - defenseDamageRaw, attacker.maxHp);
-        }
-        return {
-          attackerHp: attackerHpAfter,
-          attackerHpRaw,
-          defenderHp: defenderHpAfter,
-          defenderHpRaw,
-          attackDamageRaw,
-          defenseDamageRaw,
-        };
-      }
-
       function computeQueueResult() {
+        if (!combatApi || typeof combatApi.calculateCombatExchange !== 'function') {
+          throw new Error('combat.js did not expose calculateCombatExchange.');
+        }
+
         const attackerUnits = state.attackers
           .map((u) => {
             const snapshot = makeUnitSnapshot(u.name);
@@ -479,7 +443,7 @@
           const target = defenderUnits[defenderIndex];
           const defenderHpBefore = target.hp;
           const defenderHpBeforeRaw = target.hpRaw;
-          const result = simulateCombat(attacker, target, attacker.splash);
+          const result = combatApi.calculateCombatExchange(attacker, target, attacker.splash);
           attacker.hp = result.attackerHp;
           target.hp = result.defenderHp;
           target.hpRaw = result.defenderHpRaw;

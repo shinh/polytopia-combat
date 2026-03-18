@@ -2,7 +2,7 @@
  * Simulate one Polytopia combat exchange.
  * Formula reference: https://polytopia.fandom.com/wiki/Combat
  */
-function simulateCombat(attacker, defender, splash = false) {
+function calculateCombatExchange(attacker, defender, splash = false) {
   validateUnit(attacker, 'attacker');
   validateUnit(defender, 'defender');
   if (typeof splash !== 'boolean') {
@@ -18,34 +18,59 @@ function simulateCombat(attacker, defender, splash = false) {
     defender.defense * (defenderHpBefore / defender.maxHp) * defenseBonus;
   const totalDamage = attackForce + defenseForce;
 
+  const attackDamageRaw = (attackForce / totalDamage) * attacker.attack * 4.5;
   const attackResult = Math.round(
-    (attackForce / totalDamage) * attacker.attack * 4.5,
+    attackDamageRaw,
   );
 
   // Splash damage is half of attackResult rounded down and does not trigger retaliation.
   if (splash) {
+    const splashRaw = attackDamageRaw / 2;
     const splashDamage = Math.floor(attackResult / 2);
-    const defenderHpAfter = clampHp(defenderHpBefore - splashDamage, defender.maxHp);
+    const defenderHpAfterRounded = clampHp(
+      defenderHpBefore - splashDamage,
+      defender.maxHp,
+    );
+    const defenderHpAfterRaw = clampHp(defenderHpBefore - splashRaw, defender.maxHp);
     return {
       attackerHp: attackerHpBefore,
-      defenderHp: defenderHpAfter,
+      attackerHpRaw: attackerHpBefore,
+      defenderHp: defenderHpAfterRounded,
+      defenderHpRaw: defenderHpAfterRaw,
+      attackDamageRaw,
+      defenseDamageRaw: 0,
     };
   }
 
   let attackerHpAfter = attackerHpBefore;
+  let attackerHpRaw = attackerHpBefore;
   let defenderHpAfter = clampHp(defenderHpBefore - attackResult, defender.maxHp);
+  let defenseDamageRaw = 0;
+  const defenderHpRaw = clampHp(defenderHpBefore - attackDamageRaw, defender.maxHp);
 
   // No retaliation if defender is defeated.
   if (defenderHpAfter > 0) {
-    const defenseResult = Math.round(
-      (defenseForce / totalDamage) * defender.defense * 4.5,
-    );
+    defenseDamageRaw = (defenseForce / totalDamage) * defender.defense * 4.5;
+    const defenseResult = Math.round(defenseDamageRaw);
     attackerHpAfter = clampHp(attackerHpBefore - defenseResult, attacker.maxHp);
+    attackerHpRaw = clampHp(attackerHpBefore - defenseDamageRaw, attacker.maxHp);
   }
 
   return {
     attackerHp: attackerHpAfter,
+    attackerHpRaw,
     defenderHp: defenderHpAfter,
+    defenderHpRaw,
+    attackDamageRaw,
+    defenseDamageRaw,
+  };
+}
+
+function simulateCombat(attacker, defender, splash = false) {
+  const result = calculateCombatExchange(attacker, defender, splash);
+  return {
+    attackerHp: result.attackerHp,
+    defenderHp: result.defenderHp,
   };
 }
 
@@ -77,6 +102,18 @@ function validateUnit(unit, label) {
   }
 }
 
-module.exports = {
+const combatApi = {
+  calculateCombatExchange,
   simulateCombat,
 };
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = combatApi;
+}
+
+if (typeof window !== 'undefined') {
+  window.POLYTOPIA_COMBAT = {
+    ...(window.POLYTOPIA_COMBAT || {}),
+    ...combatApi,
+  };
+}
