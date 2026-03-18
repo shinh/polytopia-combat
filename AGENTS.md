@@ -1,0 +1,2 @@
+- Use English for all code comments and commit messages.
+- Run tests before finishing.
