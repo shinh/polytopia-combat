@@ -10,7 +10,7 @@
         line-height: 1.5;
       }
       body {
-        max-width: 1000px;
+        max-width: 1120px;
         margin: 0 auto;
         padding: 1rem;
       }
@@ -35,6 +35,9 @@
       input {
         padding: 0.35rem 0.5rem;
       }
+      .hp-input {
+        width: 4.5rem;
+      }
       ul {
         list-style: none;
         padding: 0;
@@ -45,10 +48,24 @@
         border-radius: 6px;
         padding: 0.45rem;
         display: grid;
-        grid-template-columns: 1fr auto auto;
+        grid-template-columns: minmax(220px, 1fr) auto auto auto auto;
         align-items: center;
         gap: 0.5rem;
         margin-bottom: 0.45rem;
+      }
+      .unit-meta {
+        font-size: 0.88rem;
+        color: #444;
+      }
+      .controls {
+        display: flex;
+        gap: 0.45rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .move-controls {
+        display: flex;
+        gap: 0.3rem;
       }
       table {
         width: 100%;
@@ -68,7 +85,7 @@
         font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
         word-break: break-all;
       }
-      @media (max-width: 800px) {
+      @media (max-width: 960px) {
         .layout {
           grid-template-columns: 1fr;
         }
@@ -77,10 +94,6 @@
   </head>
   <body>
     <h1>Polytopia Combat Queue UI</h1>
-    <p>
-      attacker は順番に、先頭で生存している defender を攻撃します。defender の HP が 0 なら次の defender
-      に進みます。状態は URL クエリに保存されます。
-    </p>
     <p id="loadError" class="error" hidden></p>
 
     <div class="layout">
@@ -88,7 +101,6 @@
         <h2>Attackers</h2>
         <div class="row">
           <select id="attackerSelect"></select>
-          <button id="addAttacker">Add attacker</button>
         </div>
         <ul id="attackerList"></ul>
       </section>
@@ -97,22 +109,10 @@
         <h2>Defenders</h2>
         <div class="row">
           <select id="defenderSelect"></select>
-          <button id="addDefender">Add defender</button>
         </div>
         <ul id="defenderList"></ul>
       </section>
     </div>
-
-    <section class="panel" style="margin-top: 1rem">
-      <h2>Options</h2>
-      <label>
-        defenseBonus:
-        <input id="defenseBonus" type="number" step="0.1" min="0" value="1" />
-      </label>
-      <label style="margin-left: 1rem">
-        <input id="splash" type="checkbox" /> splash
-      </label>
-    </section>
 
     <section class="panel" style="margin-top: 1rem">
       <h2>Resolution</h2>
@@ -120,10 +120,11 @@
         <thead>
           <tr>
             <th>#</th>
+            <th>Attacker</th>
             <th>Defender</th>
-            <th>Initial HP</th>
-            <th>Damage Taken</th>
-            <th>Remaining HP</th>
+            <th>Defender HP Before</th>
+            <th>Damage Taken (rounded / raw)</th>
+            <th>Defender HP After (rounded / raw)</th>
           </tr>
         </thead>
         <tbody id="resultBody"></tbody>
@@ -138,8 +139,6 @@
       const state = {
         attackers: [],
         defenders: [],
-        defenseBonus: 1,
-        splash: false,
       };
 
       let units = [];
@@ -149,56 +148,104 @@
       const defenderSelect = document.getElementById('defenderSelect');
       const attackerList = document.getElementById('attackerList');
       const defenderList = document.getElementById('defenderList');
-      const defenseBonusInput = document.getElementById('defenseBonus');
-      const splashInput = document.getElementById('splash');
       const resultBody = document.getElementById('resultBody');
       const shareUrl = document.getElementById('shareUrl');
       const loadError = document.getElementById('loadError');
 
-      function parseStateFromUrl() {
-        const params = new URLSearchParams(window.location.search);
-        state.attackers = parseGroup(params.get('a'));
-        state.defenders = parseGroup(params.get('d'));
-        const parsedDefenseBonus = Number.parseFloat(params.get('db'));
-        if (!Number.isNaN(parsedDefenseBonus) && parsedDefenseBonus >= 0) {
-          state.defenseBonus = parsedDefenseBonus;
-        }
-        state.splash = params.get('sp') === '1';
+      const DEFENSE_MODES = {
+        na: 'na',
+        def: 'def',
+        wall: 'wall',
+      };
+
+      function hasSkill(name, skill) {
+        const unit = unitMap.get(name);
+        return Boolean(unit && Array.isArray(unit.skills) && unit.skills.includes(skill));
       }
 
-      function parseGroup(raw) {
+      function canSplash(name) {
+        return hasSkill(name, 'splash') || hasSkill(name, 'explode');
+      }
+
+      function canWall(name) {
+        return hasSkill(name, 'fortify');
+      }
+
+      function calcDefenseBonus(defenseMode, pois) {
+        const table = pois
+          ? { na: 0.5, def: 0.7, wall: 2 }
+          : { na: 1, def: 1.5, wall: 4 };
+        return table[defenseMode] ?? table.na;
+      }
+
+      function normalizeDefenseModeForUnit(name, defenseMode) {
+        const wallAllowed = canWall(name);
+        if (!wallAllowed && defenseMode === DEFENSE_MODES.wall) {
+          return DEFENSE_MODES.def;
+        }
+        if (defenseMode === DEFENSE_MODES.na || defenseMode === DEFENSE_MODES.def || defenseMode === DEFENSE_MODES.wall) {
+          return defenseMode;
+        }
+        return DEFENSE_MODES.na;
+      }
+
+      function parseStateFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        state.attackers = parseGroup(params.get('a'), 'attacker');
+        state.defenders = parseGroup(params.get('d'), 'defender');
+      }
+
+      function parseGroup(raw, side) {
         if (!raw) return [];
         return raw
           .split(',')
           .map((item) => item.trim())
           .filter(Boolean)
           .map((item) => {
-            const [encodedName, hpRaw] = item.split(':');
+            const [encodedName, hpRaw, p3, p4] = item.split(':');
+            const name = decodeURIComponent(encodedName || '');
+            const hp = Number.parseFloat(hpRaw);
+
+            if (side === 'attacker') {
+              return {
+                name,
+                hp,
+                splash: p3 === '1',
+              };
+            }
+
             return {
-              name: decodeURIComponent(encodedName || ''),
-              hp: Number.parseFloat(hpRaw),
+              name,
+              hp,
+              defenseMode: p3 || DEFENSE_MODES.na,
+              pois: p4 === '1',
             };
           })
           .filter((u) => u.name);
       }
 
+      function serializeGroup(group, side) {
+        return group
+          .map((unit) => {
+            const encodedName = encodeURIComponent(unit.name);
+            const hp = Math.max(0, unit.hp);
+            if (side === 'attackers') {
+              return `${encodedName}:${hp}:${unit.splash ? '1' : '0'}`;
+            }
+
+            const defenseMode = normalizeDefenseModeForUnit(unit.name, unit.defenseMode || DEFENSE_MODES.na);
+            return `${encodedName}:${hp}:${defenseMode}:${unit.pois ? '1' : '0'}`;
+          })
+          .join(',');
+      }
+
       function syncUrl() {
         const params = new URLSearchParams();
-        params.set('a', serializeGroup(state.attackers));
-        params.set('d', serializeGroup(state.defenders));
-        params.set('db', String(state.defenseBonus));
-        if (state.splash) {
-          params.set('sp', '1');
-        }
+        params.set('a', serializeGroup(state.attackers, 'attackers'));
+        params.set('d', serializeGroup(state.defenders, 'defenders'));
         const next = `${window.location.pathname}?${params.toString()}`;
         history.replaceState(null, '', next);
         shareUrl.textContent = window.location.href;
-      }
-
-      function serializeGroup(group) {
-        return group
-          .map((unit) => `${encodeURIComponent(unit.name)}:${Math.max(0, unit.hp)}`)
-          .join(',');
       }
 
       function makeUnitSnapshot(name) {
@@ -207,23 +254,115 @@
         return { name: base.name, hp: base.health, maxHp: base.health, attack: base.attack, defense: base.defence };
       }
 
+      function clampHp(hp, maxHp) {
+        return Math.max(0, Math.min(maxHp, hp));
+      }
+
+      function moveUnit(group, index, delta) {
+        const target = index + delta;
+        if (target < 0 || target >= group.length) return;
+        const copy = group[index];
+        group[index] = group[target];
+        group[target] = copy;
+        renderAll();
+      }
+
       function renderGroup(container, group, side) {
         container.innerHTML = '';
         group.forEach((unit, index) => {
           const li = document.createElement('li');
-          const label = document.createElement('span');
+
+          const left = document.createElement('div');
+          const label = document.createElement('div');
           label.textContent = `${unit.name} (HP ${unit.hp})`;
+          const meta = document.createElement('div');
+          meta.className = 'unit-meta';
+          if (side === 'defenders') {
+            const bonus = calcDefenseBonus(unit.defenseMode, unit.pois);
+            meta.textContent = `bonus: x${bonus}`;
+          }
+          left.append(label);
+          if (meta.textContent) {
+            left.append(meta);
+          }
 
           const hpInput = document.createElement('input');
+          hpInput.className = 'hp-input';
           hpInput.type = 'number';
           hpInput.min = '0';
           hpInput.step = '1';
           hpInput.value = String(unit.hp);
           hpInput.addEventListener('change', () => {
+            const snapshot = makeUnitSnapshot(unit.name);
+            if (!snapshot) return;
             const value = Math.max(0, Math.round(Number.parseFloat(hpInput.value) || 0));
-            unit.hp = value;
+            unit.hp = clampHp(value, snapshot.maxHp);
             renderAll();
           });
+
+          const controls = document.createElement('div');
+          controls.className = 'controls';
+          if (side === 'attackers') {
+            if (canSplash(unit.name)) {
+              const splashLabel = document.createElement('label');
+              const splashInput = document.createElement('input');
+              splashInput.type = 'checkbox';
+              splashInput.checked = Boolean(unit.splash);
+              splashInput.addEventListener('change', () => {
+                unit.splash = splashInput.checked;
+                renderAll();
+              });
+              splashLabel.append(splashInput, ' splash');
+              controls.appendChild(splashLabel);
+            }
+            unit.splash = Boolean(unit.splash && canSplash(unit.name));
+          } else {
+            const defenseMode = normalizeDefenseModeForUnit(unit.name, unit.defenseMode);
+            unit.defenseMode = defenseMode;
+
+            const defenseSelect = document.createElement('select');
+            const options = canWall(unit.name)
+              ? [DEFENSE_MODES.na, DEFENSE_MODES.def, DEFENSE_MODES.wall]
+              : [DEFENSE_MODES.na, DEFENSE_MODES.def];
+            options.forEach((key) => {
+              const option = document.createElement('option');
+              option.value = key;
+              option.textContent = key;
+              defenseSelect.appendChild(option);
+            });
+            defenseSelect.value = defenseMode;
+            defenseSelect.addEventListener('change', () => {
+              unit.defenseMode = defenseSelect.value;
+              renderAll();
+            });
+
+            const poisLabel = document.createElement('label');
+            const poisInput = document.createElement('input');
+            poisInput.type = 'checkbox';
+            poisInput.checked = Boolean(unit.pois);
+            poisInput.addEventListener('change', () => {
+              unit.pois = poisInput.checked;
+              renderAll();
+            });
+            poisLabel.append(poisInput, ' pois');
+
+            controls.append('defense ', defenseSelect, poisLabel);
+          }
+
+          const moveControls = document.createElement('div');
+          moveControls.className = 'move-controls';
+          const upButton = document.createElement('button');
+          upButton.textContent = '↑';
+          upButton.title = 'Move up';
+          upButton.disabled = index === 0;
+          upButton.addEventListener('click', () => moveUnit(group, index, -1));
+
+          const downButton = document.createElement('button');
+          downButton.textContent = '↓';
+          downButton.title = 'Move down';
+          downButton.disabled = index === group.length - 1;
+          downButton.addEventListener('click', () => moveUnit(group, index, 1));
+          moveControls.append(upButton, downButton);
 
           const removeButton = document.createElement('button');
           removeButton.textContent = 'Remove';
@@ -232,7 +371,7 @@
             renderAll();
           });
 
-          li.append(label, hpInput, removeButton);
+          li.append(left, hpInput, controls, moveControls, removeButton);
           container.appendChild(li);
         });
 
@@ -243,86 +382,152 @@
         }
       }
 
-      function simulateCombat(attacker, defender, splash = false, defenseBonus = 1) {
+      function simulateCombat(attacker, defender, splash = false) {
         const attackForce = attacker.attack * (attacker.hp / attacker.maxHp);
-        const defenseForce = defender.defense * (defender.hp / defender.maxHp) * defenseBonus;
+        const defenseForce = defender.defense * (defender.hp / defender.maxHp) * defender.defenseBonus;
         const totalDamage = attackForce + defenseForce;
-        const attackResult = Math.round((attackForce / totalDamage) * attacker.attack * 4.5);
+        const attackDamageRaw = (attackForce / totalDamage) * attacker.attack * 4.5;
+        const attackResult = Math.round(attackDamageRaw);
 
         if (splash) {
+          const splashRaw = attackDamageRaw / 2;
           return {
             attackerHp: attacker.hp,
+            attackerHpRaw: attacker.hp,
             defenderHp: clampHp(defender.hp - attackResult / 2, defender.maxHp),
+            defenderHpRaw: clampHp(defender.hp - splashRaw, defender.maxHp),
+            attackDamageRaw,
+            defenseDamageRaw: 0,
           };
         }
 
         const defenderHpAfter = clampHp(defender.hp - attackResult, defender.maxHp);
+        const defenderHpRaw = clampHp(defender.hp - attackDamageRaw, defender.maxHp);
         let attackerHpAfter = attacker.hp;
-        if (defenderHpAfter > 0) {
-          const defenseResult = Math.round((defenseForce / totalDamage) * defender.defense * 4.5);
-          attackerHpAfter = clampHp(attacker.hp - defenseResult, attacker.maxHp);
-        }
-        return { attackerHp: attackerHpAfter, defenderHp: defenderHpAfter };
-      }
+        let attackerHpRaw = attacker.hp;
+        let defenseDamageRaw = 0;
 
-      function clampHp(hp, maxHp) {
-        return Math.max(0, Math.min(maxHp, hp));
+        if (defenderHpAfter > 0) {
+          defenseDamageRaw = (defenseForce / totalDamage) * defender.defense * 4.5;
+          const defenseResult = Math.round(defenseDamageRaw);
+          attackerHpAfter = clampHp(attacker.hp - defenseResult, attacker.maxHp);
+          attackerHpRaw = clampHp(attacker.hp - defenseDamageRaw, attacker.maxHp);
+        }
+        return {
+          attackerHp: attackerHpAfter,
+          attackerHpRaw,
+          defenderHp: defenderHpAfter,
+          defenderHpRaw,
+          attackDamageRaw,
+          defenseDamageRaw,
+        };
       }
 
       function computeQueueResult() {
-        const attackerUnits = state.attackers.map((u) => {
-          const snapshot = makeUnitSnapshot(u.name);
-          return snapshot ? { ...snapshot, hp: clampHp(u.hp, snapshot.maxHp) } : null;
-        }).filter(Boolean);
+        const attackerUnits = state.attackers
+          .map((u) => {
+            const snapshot = makeUnitSnapshot(u.name);
+            if (!snapshot) return null;
+            return {
+              ...snapshot,
+              hp: clampHp(u.hp, snapshot.maxHp),
+              splash: Boolean(u.splash && canSplash(u.name)),
+            };
+          })
+          .filter(Boolean);
 
-        const defenderUnits = state.defenders.map((u) => {
-          const snapshot = makeUnitSnapshot(u.name);
-          return snapshot ? { ...snapshot, hp: clampHp(u.hp, snapshot.maxHp), initialHp: clampHp(u.hp, snapshot.maxHp) } : null;
-        }).filter(Boolean);
+        const defenderUnits = state.defenders
+          .map((u) => {
+            const snapshot = makeUnitSnapshot(u.name);
+            if (!snapshot) return null;
+            const mode = normalizeDefenseModeForUnit(u.name, u.defenseMode);
+            const pois = Boolean(u.pois);
+            return {
+              ...snapshot,
+              hp: clampHp(u.hp, snapshot.maxHp),
+              initialHp: clampHp(u.hp, snapshot.maxHp),
+              hpRaw: clampHp(u.hp, snapshot.maxHp),
+              initialHpRaw: clampHp(u.hp, snapshot.maxHp),
+              defenseMode: mode,
+              pois,
+              defenseBonus: calcDefenseBonus(mode, pois),
+            };
+          })
+          .filter(Boolean);
 
+        const rounds = [];
         let defenderIndex = 0;
-        for (const attacker of attackerUnits) {
+        attackerUnits.forEach((attacker, attackerIndex) => {
           while (defenderIndex < defenderUnits.length && defenderUnits[defenderIndex].hp <= 0) {
             defenderIndex += 1;
           }
-          if (defenderIndex >= defenderUnits.length) break;
+          if (defenderIndex >= defenderUnits.length) {
+            rounds.push({
+              index: attackerIndex + 1,
+              attackerName: attacker.name,
+              defenderName: '-',
+              defenderHpBefore: '-',
+              damageTaken: '-',
+              damageTakenRaw: '-',
+              defenderHpAfter: '-',
+              defenderHpAfterRaw: '-',
+            });
+            return;
+          }
 
           const target = defenderUnits[defenderIndex];
-          const result = simulateCombat(attacker, target, state.splash, state.defenseBonus);
+          const defenderHpBefore = target.hp;
+          const defenderHpBeforeRaw = target.hpRaw;
+          const result = simulateCombat(attacker, target, attacker.splash);
           attacker.hp = result.attackerHp;
           target.hp = result.defenderHp;
-        }
+          target.hpRaw = result.defenderHpRaw;
+          rounds.push({
+            index: attackerIndex + 1,
+            attackerName: attacker.name,
+            defenderName: target.name,
+            defenderHpBefore,
+            damageTaken: defenderHpBefore - result.defenderHp,
+            damageTakenRaw: defenderHpBeforeRaw - result.defenderHpRaw,
+            defenderHpAfter: result.defenderHp,
+            defenderHpAfterRaw: result.defenderHpRaw,
+          });
+        });
 
-        return defenderUnits;
+        return rounds;
       }
 
       function renderResult() {
         resultBody.innerHTML = '';
-        const defenders = computeQueueResult();
+        const rounds = computeQueueResult();
 
-        defenders.forEach((defender, idx) => {
+        rounds.forEach((round) => {
           const tr = document.createElement('tr');
-          const damageTaken = defender.initialHp - defender.hp;
+          const damageText = typeof round.damageTaken === 'number'
+            ? `${round.damageTaken} / ${round.damageTakenRaw.toFixed(2)}`
+            : '-';
+          const hpAfterText = typeof round.defenderHpAfter === 'number'
+            ? `${round.defenderHpAfter} / ${round.defenderHpAfterRaw.toFixed(2)}`
+            : '-';
           tr.innerHTML = `
-            <td>${idx + 1}</td>
-            <td>${defender.name}</td>
-            <td>${defender.initialHp}</td>
-            <td>${damageTaken}</td>
-            <td>${defender.hp}</td>
+            <td>${round.index}</td>
+            <td>${round.attackerName}</td>
+            <td>${round.defenderName}</td>
+            <td>${round.defenderHpBefore}</td>
+            <td>${damageText}</td>
+            <td>${hpAfterText}</td>
           `;
           resultBody.appendChild(tr);
         });
 
-        if (defenders.length === 0) {
+        if (rounds.length === 0) {
           const tr = document.createElement('tr');
-          tr.innerHTML = '<td colspan="5">No defenders selected</td>';
+          tr.innerHTML = '<td colspan="6">No attackers selected</td>';
           resultBody.appendChild(tr);
         }
       }
 
       function renderAll() {
-        defenseBonusInput.value = String(state.defenseBonus);
-        splashInput.checked = state.splash;
         renderGroup(attackerList, state.attackers, 'attackers');
         renderGroup(defenderList, state.defenders, 'defenders');
         renderResult();
@@ -332,26 +537,52 @@
       function appendUnit(side, selectedName) {
         const snapshot = makeUnitSnapshot(selectedName);
         if (!snapshot) return;
-        state[side].push({ name: snapshot.name, hp: snapshot.maxHp });
+
+        if (side === 'attackers') {
+          state.attackers.push({ name: snapshot.name, hp: snapshot.maxHp, splash: false });
+        } else {
+          state.defenders.push({ name: snapshot.name, hp: snapshot.maxHp, defenseMode: DEFENSE_MODES.na, pois: false });
+        }
+
         renderAll();
       }
 
       function hydrateFromUrlAgainstUnits() {
-        for (const key of ['attackers', 'defenders']) {
-          state[key] = state[key]
-            .map((u) => {
-              const base = makeUnitSnapshot(u.name);
-              if (!base) return null;
-              const hp = Number.isNaN(u.hp) ? base.maxHp : clampHp(Math.round(u.hp), base.maxHp);
-              return { name: u.name, hp };
-            })
-            .filter(Boolean);
-        }
+        state.attackers = state.attackers
+          .map((u) => {
+            const base = makeUnitSnapshot(u.name);
+            if (!base) return null;
+            return {
+              name: u.name,
+              hp: Number.isNaN(u.hp) ? base.maxHp : clampHp(Math.round(u.hp), base.maxHp),
+              splash: Boolean(u.splash && canSplash(u.name)),
+            };
+          })
+          .filter(Boolean);
+
+        state.defenders = state.defenders
+          .map((u) => {
+            const base = makeUnitSnapshot(u.name);
+            if (!base) return null;
+            return {
+              name: u.name,
+              hp: Number.isNaN(u.hp) ? base.maxHp : clampHp(Math.round(u.hp), base.maxHp),
+              defenseMode: normalizeDefenseModeForUnit(u.name, u.defenseMode || DEFENSE_MODES.na),
+              pois: Boolean(u.pois),
+            };
+          })
+          .filter(Boolean);
       }
 
       function populateSelectors() {
         for (const select of [attackerSelect, defenderSelect]) {
           select.innerHTML = '';
+          const placeholder = document.createElement('option');
+          placeholder.value = '';
+          placeholder.textContent = 'Select a unit';
+          placeholder.selected = true;
+          select.appendChild(placeholder);
+
           units.forEach((unit) => {
             const option = document.createElement('option');
             option.value = unit.name;
@@ -368,29 +599,18 @@
 
         units = window.POLYTOPIA_UNITS_DATA.units.filter((u) => Number.isFinite(u.health));
         unitMap = new Map(units.map((u) => [u.name, u]));
-
-        const config = window.POLYTOPIA_COMBAT_CONFIG || {};
-        if (typeof config.defaultDefenseBonus === 'number') {
-          state.defenseBonus = config.defaultDefenseBonus;
-        }
-        if (typeof config.defaultSplash === 'boolean') {
-          state.splash = config.defaultSplash;
-        }
       }
 
-      document.getElementById('addAttacker').addEventListener('click', () => {
+      attackerSelect.addEventListener('change', () => {
+        if (!attackerSelect.value) return;
         appendUnit('attackers', attackerSelect.value);
+        attackerSelect.value = '';
       });
-      document.getElementById('addDefender').addEventListener('click', () => {
+
+      defenderSelect.addEventListener('change', () => {
+        if (!defenderSelect.value) return;
         appendUnit('defenders', defenderSelect.value);
-      });
-      defenseBonusInput.addEventListener('input', () => {
-        state.defenseBonus = Math.max(0, Number.parseFloat(defenseBonusInput.value) || 0);
-        renderAll();
-      });
-      splashInput.addEventListener('change', () => {
-        state.splash = splashInput.checked;
-        renderAll();
+        defenderSelect.value = '';
       });
 
       (() => {
