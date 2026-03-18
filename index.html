@@ -132,12 +132,9 @@
       <p id="shareUrl" class="mono"></p>
     </section>
 
+    <script src="./units.json"></script>
+    <script src="./combat.json"></script>
     <script>
-      const fallbackCombatConfig = {
-        defaultDefenseBonus: 1,
-        defaultSplash: false,
-      };
-
       const state = {
         attackers: [],
         defenders: [],
@@ -364,31 +361,20 @@
         }
       }
 
-      async function loadData() {
-        const [unitsRes, combatRes] = await Promise.allSettled([
-          fetch('./units.json'),
-          fetch('./combat.json'),
-        ]);
-
-        if (unitsRes.status !== 'fulfilled' || !unitsRes.value.ok) {
-          throw new Error('Could not load units.json. Use a local web server, e.g. `python -m http.server`.');
+      function loadDataFromScript() {
+        if (!window.POLYTOPIA_UNITS_DATA || !Array.isArray(window.POLYTOPIA_UNITS_DATA.units)) {
+          throw new Error('units.json script data is missing.');
         }
 
-        const unitsJson = await unitsRes.value.json();
-        units = (unitsJson.units || []).filter((u) => Number.isFinite(u.health));
+        units = window.POLYTOPIA_UNITS_DATA.units.filter((u) => Number.isFinite(u.health));
         unitMap = new Map(units.map((u) => [u.name, u]));
 
-        if (combatRes.status === 'fulfilled' && combatRes.value.ok) {
-          const config = await combatRes.value.json();
-          if (typeof config.defaultDefenseBonus === 'number') {
-            state.defenseBonus = config.defaultDefenseBonus;
-          }
-          if (typeof config.defaultSplash === 'boolean') {
-            state.splash = config.defaultSplash;
-          }
-        } else {
-          state.defenseBonus = fallbackCombatConfig.defaultDefenseBonus;
-          state.splash = fallbackCombatConfig.defaultSplash;
+        const config = window.POLYTOPIA_COMBAT_CONFIG || {};
+        if (typeof config.defaultDefenseBonus === 'number') {
+          state.defenseBonus = config.defaultDefenseBonus;
+        }
+        if (typeof config.defaultSplash === 'boolean') {
+          state.splash = config.defaultSplash;
         }
       }
 
@@ -407,10 +393,10 @@
         renderAll();
       });
 
-      (async () => {
+      (() => {
         parseStateFromUrl();
         try {
-          await loadData();
+          loadDataFromScript();
           populateSelectors();
           hydrateFromUrlAgainstUnits();
           renderAll();
