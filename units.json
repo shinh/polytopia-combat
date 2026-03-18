@@ -1,0 +1,815 @@
+{
+  "source": "https://polytopia.fandom.com/wiki/Units",
+  "units": [
+    {
+      "name": "Amphibian",
+      "health": 10,
+      "veteran": true,
+      "attack": 2,
+      "defence": 1,
+      "movement": 2,
+      "range": 1,
+      "skills": [
+        "amphibious",
+        "dash",
+        "escape",
+        "fortify"
+      ]
+    },
+    {
+      "name": "Archer",
+      "health": 10,
+      "veteran": true,
+      "attack": 2,
+      "defence": 1,
+      "movement": 1,
+      "range": 2,
+      "skills": [
+        "dash",
+        "fortify"
+      ]
+    },
+    {
+      "name": "Baby Dragon",
+      "health": 15,
+      "veteran": false,
+      "attack": 3,
+      "defence": 3,
+      "movement": 2,
+      "range": 1,
+      "skills": [
+        "air",
+        "grow",
+        "dash",
+        "escape",
+        "scout",
+        "static"
+      ]
+    },
+    {
+      "name": "Battle Sled",
+      "health": 15,
+      "veteran": true,
+      "attack": 3,
+      "defence": 2,
+      "movement": 2,
+      "range": 1,
+      "skills": [
+        "dash",
+        "escape",
+        "skate"
+      ]
+    },
+    {
+      "name": "Battleship",
+      "health": null,
+      "veteran": false,
+      "attack": 4,
+      "defence": 3,
+      "movement": 3,
+      "range": 2,
+      "skills": [
+        "carry",
+        "dash",
+        "scout",
+        "float"
+      ]
+    },
+    {
+      "name": "Boat",
+      "health": null,
+      "veteran": false,
+      "attack": 1,
+      "defence": 1,
+      "movement": 2,
+      "range": 2,
+      "skills": [
+        "carry",
+        "dash",
+        "float"
+      ]
+    },
+    {
+      "name": "Bunny",
+      "health": 20,
+      "veteran": false,
+      "attack": 5,
+      "defence": 1,
+      "movement": 1,
+      "range": 1,
+      "skills": [
+        "independent",
+        "static"
+      ]
+    },
+    {
+      "name": "Bunta",
+      "health": 20,
+      "veteran": false,
+      "attack": 5,
+      "defence": 1,
+      "movement": 1,
+      "range": 1,
+      "skills": [
+        "independent",
+        "static"
+      ]
+    },
+    {
+      "name": "Catapult",
+      "health": 10,
+      "veteran": true,
+      "attack": 4,
+      "defence": 0,
+      "movement": 1,
+      "range": 3,
+      "skills": [
+        "unit_skills#stiff"
+      ]
+    },
+    {
+      "name": "Centipede",
+      "health": 20,
+      "veteran": false,
+      "attack": 4,
+      "defence": 3,
+      "movement": 2,
+      "range": 1,
+      "skills": [
+        "dash",
+        "eat",
+        "creep",
+        "static"
+      ]
+    },
+    {
+      "name": "Cloak",
+      "health": 5,
+      "veteran": false,
+      "attack": 2,
+      "defence": 0.5,
+      "movement": 2,
+      "range": 1,
+      "skills": [
+        "hide",
+        "infiltrate",
+        "dash",
+        "scout",
+        "creep",
+        "stiff",
+        "static"
+      ]
+    },
+    {
+      "name": "Crab",
+      "health": 40,
+      "veteran": false,
+      "attack": 4,
+      "defence": 4,
+      "movement": 2,
+      "range": 1,
+      "skills": [
+        "amphibious",
+        "escape",
+        "auto_flood",
+        "static"
+      ]
+    },
+    {
+      "name": "Dagger",
+      "health": 10,
+      "veteran": false,
+      "attack": 2,
+      "defence": 2,
+      "movement": 1,
+      "range": 1,
+      "skills": [
+        "dash",
+        "surprise",
+        "independent",
+        "static"
+      ]
+    },
+    {
+      "name": "Defender",
+      "health": 15,
+      "veteran": true,
+      "attack": 1,
+      "defence": 3,
+      "movement": 1,
+      "range": 1,
+      "skills": [
+        "fortify"
+      ]
+    },
+    {
+      "name": "Dinghy",
+      "health": 5,
+      "veteran": false,
+      "attack": 2,
+      "defence": 0.5,
+      "movement": 2,
+      "range": 1,
+      "skills": [
+        "water",
+        "carry",
+        "hide",
+        "infiltrate",
+        "dash",
+        "scout",
+        "static",
+        "stiff"
+      ]
+    },
+    {
+      "name": "Doomux",
+      "health": 20,
+      "veteran": false,
+      "attack": 3.5,
+      "defence": 2,
+      "movement": 3,
+      "range": 1,
+      "skills": [
+        "dash",
+        "creep",
+        "explode",
+        "static"
+      ]
+    },
+    {
+      "name": "Dragon Egg",
+      "health": 10,
+      "veteran": false,
+      "attack": 0,
+      "defence": 2,
+      "movement": 1,
+      "range": 1,
+      "skills": [
+        "grow",
+        "fortify",
+        "stiff",
+        "static"
+      ]
+    },
+    {
+      "name": "Exida",
+      "health": 10,
+      "veteran": true,
+      "attack": 3,
+      "defence": 1,
+      "movement": 2,
+      "range": 3,
+      "skills": [
+        "poison",
+        "splash",
+        "creep"
+      ]
+    },
+    {
+      "name": "Fire Dragon",
+      "health": 20,
+      "veteran": false,
+      "attack": 4,
+      "defence": 3,
+      "movement": 3,
+      "range": 2,
+      "skills": [
+        "air",
+        "dash",
+        "splash",
+        "scout",
+        "static"
+      ]
+    },
+    {
+      "name": "Gaami",
+      "health": 30,
+      "veteran": false,
+      "attack": 4,
+      "defence": 3,
+      "movement": 1,
+      "range": 1,
+      "skills": [
+        "auto_freeze",
+        "freeze_area",
+        "static"
+      ]
+    },
+    {
+      "name": "Giant",
+      "health": 40,
+      "veteran": null,
+      "attack": 5,
+      "defence": 4,
+      "movement": 1,
+      "range": 1,
+      "skills": [
+        "static"
+      ]
+    },
+    {
+      "name": "Guard Tower",
+      "health": 20,
+      "veteran": false,
+      "attack": 3,
+      "defence": 2,
+      "movement": 0,
+      "range": 2,
+      "skills": [
+        "build"
+      ]
+    },
+    {
+      "name": "Hexapod",
+      "health": 5,
+      "veteran": true,
+      "attack": 3,
+      "defence": 1,
+      "movement": 2,
+      "range": 1,
+      "skills": [
+        "dash",
+        "escape",
+        "creep",
+        "sneak"
+      ]
+    },
+    {
+      "name": "Ice Archer",
+      "health": 10,
+      "veteran": true,
+      "attack": 1,
+      "defence": 1,
+      "movement": 1,
+      "range": 2,
+      "skills": [
+        "dash",
+        "freeze",
+        "fortify",
+        "stiff"
+      ]
+    },
+    {
+      "name": "Ice Fortress",
+      "health": 20,
+      "veteran": false,
+      "attack": 4,
+      "defence": 3,
+      "movement": 1,
+      "range": 2,
+      "skills": [
+        "skate",
+        "scout",
+        "escape",
+        "static"
+      ]
+    },
+    {
+      "name": "Insect Egg",
+      "health": null,
+      "veteran": null,
+      "attack": null,
+      "defence": null,
+      "movement": null,
+      "range": null,
+      "skills": []
+    },
+    {
+      "name": "Jelly",
+      "health": 20,
+      "veteran": false,
+      "attack": 2,
+      "defence": 2,
+      "movement": 2,
+      "range": 1,
+      "skills": [
+        "tentacles",
+        "water",
+        "stiff",
+        "static"
+      ]
+    },
+    {
+      "name": "Kiton",
+      "health": 15,
+      "veteran": true,
+      "attack": 1,
+      "defence": 3,
+      "movement": 1,
+      "range": 1,
+      "skills": [
+        "poison",
+        "creep"
+      ]
+    },
+    {
+      "name": "Knight",
+      "health": 10,
+      "veteran": true,
+      "attack": 3.5,
+      "defence": 1,
+      "movement": 3,
+      "range": 1,
+      "skills": [
+        "dash",
+        "persist",
+        "fortify"
+      ]
+    },
+    {
+      "name": "Larva",
+      "health": 10,
+      "veteran": null,
+      "attack": null,
+      "defence": null,
+      "movement": null,
+      "range": null,
+      "skills": [
+        "dash",
+        "creep",
+        "surprise",
+        "independent",
+        "static",
+        "grow"
+      ]
+    },
+    {
+      "name": "Mantis",
+      "health": null,
+      "veteran": null,
+      "attack": null,
+      "defence": null,
+      "movement": null,
+      "range": null,
+      "skills": []
+    },
+    {
+      "name": "Mermaid",
+      "health": 10,
+      "veteran": true,
+      "attack": 2,
+      "defence": 2,
+      "movement": 1,
+      "range": 1,
+      "skills": [
+        "dash",
+        "fortify",
+        "amphibious"
+      ]
+    },
+    {
+      "name": "Mermaid Archer",
+      "health": 10,
+      "veteran": true,
+      "attack": 2,
+      "defence": 1,
+      "movement": 1,
+      "range": 2,
+      "skills": [
+        "dash",
+        "fortify",
+        "amphibious"
+      ]
+    },
+    {
+      "name": "Mermaid Dagger",
+      "health": 10,
+      "veteran": false,
+      "attack": 2,
+      "defence": 2,
+      "movement": 1,
+      "range": 1,
+      "skills": [
+        "amphibious",
+        "dash",
+        "surprise",
+        "independent",
+        "static"
+      ]
+    },
+    {
+      "name": "Mermaid Defender",
+      "health": 15,
+      "veteran": true,
+      "attack": 1,
+      "defence": 3,
+      "movement": 1,
+      "range": 1,
+      "skills": [
+        "amphibious",
+        "fortify"
+      ]
+    },
+    {
+      "name": "Mind Bender",
+      "health": 10,
+      "veteran": true,
+      "attack": 0,
+      "defence": 1,
+      "movement": 1,
+      "range": 1,
+      "skills": [
+        "heal",
+        "convert",
+        "stiff"
+      ]
+    },
+    {
+      "name": "Mooni",
+      "health": 10,
+      "veteran": false,
+      "attack": 0,
+      "defence": 1,
+      "movement": 1,
+      "range": 1,
+      "skills": [
+        "auto_freeze",
+        "skate",
+        "stiff",
+        "static"
+      ]
+    },
+    {
+      "name": "Moth",
+      "health": null,
+      "veteran": null,
+      "attack": null,
+      "defence": null,
+      "movement": null,
+      "range": null,
+      "skills": []
+    },
+    {
+      "name": "Navalon",
+      "health": 30,
+      "veteran": false,
+      "attack": 4,
+      "defence": 4,
+      "movement": 3,
+      "range": 1,
+      "skills": [
+        "water",
+        "navigate",
+        "dash",
+        "persist",
+        "static"
+      ]
+    },
+    {
+      "name": "Phychi",
+      "health": 5,
+      "veteran": true,
+      "attack": 0.7,
+      "defence": 2,
+      "movement": 2,
+      "range": 2,
+      "skills": [
+        "air",
+        "dash",
+        "double_attack",
+        "poison",
+        "surprise"
+      ]
+    },
+    {
+      "name": "Pirate",
+      "health": 10,
+      "veteran": false,
+      "attack": 2,
+      "defence": 2,
+      "movement": 2,
+      "range": 1,
+      "skills": [
+        "water",
+        "carry",
+        "dash",
+        "surprise",
+        "independent",
+        "static"
+      ]
+    },
+    {
+      "name": "Polytaur",
+      "health": 15,
+      "veteran": false,
+      "attack": 3,
+      "defence": 1,
+      "movement": 1,
+      "range": 1,
+      "skills": [
+        "dash",
+        "fortify",
+        "independent",
+        "static"
+      ]
+    },
+    {
+      "name": "Puffer",
+      "health": 10,
+      "veteran": true,
+      "attack": 4,
+      "defence": 0,
+      "movement": 2,
+      "range": 3,
+      "skills": [
+        "water",
+        "drench",
+        "stiff"
+      ]
+    },
+    {
+      "name": "Raychi",
+      "health": 10,
+      "veteran": true,
+      "attack": 3,
+      "defence": 2,
+      "movement": 3,
+      "range": 1,
+      "skills": [
+        "water",
+        "dash"
+      ]
+    },
+    {
+      "name": "Rider",
+      "health": 10,
+      "veteran": true,
+      "attack": 2,
+      "defence": 1,
+      "movement": 2,
+      "range": 1,
+      "skills": [
+        "dash",
+        "escape",
+        "fortify"
+      ]
+    },
+    {
+      "name": "Scout",
+      "health": 5,
+      "veteran": false,
+      "attack": 0,
+      "defence": 0,
+      "movement": 2,
+      "range": null,
+      "skills": [
+        "scout",
+        "sneak"
+      ]
+    },
+    {
+      "name": "Scout",
+      "health": 2,
+      "veteran": null,
+      "attack": null,
+      "defence": null,
+      "movement": null,
+      "range": null,
+      "skills": []
+    },
+    {
+      "name": "Scuba",
+      "health": 5,
+      "veteran": false,
+      "attack": 0,
+      "defence": 0.5,
+      "movement": 2,
+      "range": 1,
+      "skills": [
+        "amphibious",
+        "hide",
+        "infiltrate",
+        "dash",
+        "scout",
+        "creep",
+        "stiff",
+        "static"
+      ]
+    },
+    {
+      "name": "Segment",
+      "health": 10,
+      "veteran": false,
+      "attack": 2,
+      "defence": 2,
+      "movement": 1,
+      "range": 1,
+      "skills": [
+        "independent",
+        "creep",
+        "explode",
+        "dash",
+        "stiff",
+        "static"
+      ]
+    },
+    {
+      "name": "Shaman",
+      "health": 10,
+      "veteran": false,
+      "attack": 1,
+      "defence": 1,
+      "movement": 1,
+      "range": 1,
+      "skills": [
+        "swarm",
+        "parasite"
+      ]
+    },
+    {
+      "name": "Shark",
+      "health": 10,
+      "veteran": true,
+      "attack": 3.5,
+      "defence": 2,
+      "movement": 3,
+      "range": 1,
+      "skills": [
+        "dash",
+        "surprise",
+        "water"
+      ]
+    },
+    {
+      "name": "Ship",
+      "health": null,
+      "veteran": false,
+      "attack": 2,
+      "defence": 2,
+      "movement": 3,
+      "range": 2,
+      "skills": [
+        "carry",
+        "dash",
+        "float"
+      ]
+    },
+    {
+      "name": "Siren",
+      "health": 10,
+      "veteran": true,
+      "attack": 0,
+      "defence": 1,
+      "movement": 1,
+      "range": 1,
+      "skills": [
+        "amphibious",
+        "heal",
+        "convert",
+        "stiff"
+      ]
+    },
+    {
+      "name": "Swordsmaid",
+      "health": 15,
+      "veteran": true,
+      "attack": 3,
+      "defence": 3,
+      "movement": 1,
+      "range": 1,
+      "skills": [
+        "dash",
+        "amphibious"
+      ]
+    },
+    {
+      "name": "Swordsman",
+      "health": 15,
+      "veteran": true,
+      "attack": 3,
+      "defence": 3,
+      "movement": 1,
+      "range": 1,
+      "skills": [
+        "dash"
+      ]
+    },
+    {
+      "name": "Tridention",
+      "health": 10,
+      "veteran": true,
+      "attack": 2.5,
+      "defence": 1,
+      "movement": 2,
+      "range": 2,
+      "skills": [
+        "dash",
+        "persist",
+        "amphibious"
+      ]
+    },
+    {
+      "name": "Warrior",
+      "health": 10,
+      "veteran": true,
+      "attack": 2,
+      "defence": 2,
+      "movement": 1,
+      "range": 1,
+      "skills": [
+        "dash",
+        "fortify"
+      ]
+    }
+  ]
+}
