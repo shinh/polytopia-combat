@@ -29,7 +29,7 @@ test('no retaliation when defender is defeated', () => {
     { hp: 1, maxHp: 10, attack: 2, defense: 2, defenseBonus: 1.5 },
   );
 
-  assert.equal(result.defenderHp, 0);
+  assert.ok(result.defenderHp < 0);
   assert.equal(result.attackerHp, 10);
 });
 
@@ -76,4 +76,14 @@ test('calculateCombatExchange returns rounded and raw splash values', () => {
   assert.equal(splash.defenderHp, 36);
   assert.equal(splash.defenderHpRaw, 35.5);
   assert.equal(splash.attackDamageRaw, 9);
+});
+
+test('hp values are not floored to zero when overkilled', () => {
+  const result = calculateCombatExchange(
+    { hp: 10, maxHp: 10, attack: 8, defense: 1 },
+    { hp: 1, maxHp: 10, attack: 2, defense: 2, defenseBonus: 1.5 },
+  );
+
+  assert.equal(result.defenderHp, -34);
+  assert.ok(Math.abs(result.defenderHpRaw - (-33.7)) < 0.01);
 });
