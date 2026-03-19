@@ -379,20 +379,23 @@
             const defenseMode = normalizeDefenseModeForUnit(unit.name, unit.defenseMode);
             unit.defenseMode = defenseMode;
 
-            const defenseSelect = document.createElement('select');
-            const options = canWall(unit.name)
+            const defenseModes = canWall(unit.name)
               ? [DEFENSE_MODES.na, DEFENSE_MODES.def, DEFENSE_MODES.wall]
               : [DEFENSE_MODES.na, DEFENSE_MODES.def];
-            options.forEach((key) => {
-              const option = document.createElement('option');
-              option.value = key;
-              option.textContent = key;
-              defenseSelect.appendChild(option);
-            });
-            defenseSelect.value = defenseMode;
-            defenseSelect.addEventListener('change', () => {
-              unit.defenseMode = defenseSelect.value;
-              renderAll();
+
+            const defenseWrapper = document.createElement('span');
+            defenseWrapper.append('defense ');
+            defenseModes.forEach((mode) => {
+              const modeLabel = document.createElement('label');
+              const modeInput = document.createElement('input');
+              modeInput.type = 'checkbox';
+              modeInput.checked = defenseMode === mode;
+              modeInput.addEventListener('change', () => {
+                unit.defenseMode = mode;
+                renderAll();
+              });
+              modeLabel.append(modeInput, ` ${mode}`);
+              defenseWrapper.append(modeLabel);
             });
 
             const poisLabel = document.createElement('label');
@@ -405,7 +408,7 @@
             });
             poisLabel.append(poisInput, ' pois');
 
-            controls.append('defense ', defenseSelect, poisLabel);
+            controls.append(defenseWrapper, poisLabel);
           }
 
           if (canVet(unit.name)) {
