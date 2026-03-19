@@ -383,6 +383,14 @@
         return Math.max(0, Math.min(maxHp, hp));
       }
 
+      function applyHpOnMaxChange(unit, previousMaxHp, nextMaxHp) {
+        if (unit.hp === previousMaxHp) {
+          unit.hp = nextMaxHp;
+          return;
+        }
+        unit.hp = clampHp(unit.hp, nextMaxHp);
+      }
+
       function moveUnit(group, index, delta) {
         const target = index + delta;
         if (target < 0 || target >= group.length) return;
@@ -633,10 +641,11 @@
 
           if (canVet(unit.name)) {
             const vetButton = createToggleButton('vet', Boolean(unit.vet), () => {
+              const previousMaxHp = snapshot.maxHp;
               unit.vet = !unit.vet;
               const nextSnapshot = makeUnitSnapshot(unit.name, unit);
               if (nextSnapshot) {
-                unit.hp = clampHp(unit.hp, nextSnapshot.maxHp);
+                applyHpOnMaxChange(unit, previousMaxHp, nextSnapshot.maxHp);
               }
               renderAll();
             });
@@ -646,20 +655,16 @@
           }
 
           if (canHp10(unit.name)) {
-            const hp10Label = document.createElement('label');
-            const hp10Input = document.createElement('input');
-            hp10Input.type = 'checkbox';
-            hp10Input.checked = Boolean(unit.hp10);
-            hp10Input.addEventListener('change', () => {
-              unit.hp10 = hp10Input.checked;
+            const hp10Button = createToggleButton('hp10', Boolean(unit.hp10), () => {
+              const previousMaxHp = snapshot.maxHp;
+              unit.hp10 = !unit.hp10;
               const nextSnapshot = makeUnitSnapshot(unit.name, unit);
               if (nextSnapshot) {
-                unit.hp = clampHp(unit.hp, nextSnapshot.maxHp);
+                applyHpOnMaxChange(unit, previousMaxHp, nextSnapshot.maxHp);
               }
               renderAll();
             });
-            hp10Label.append(hp10Input, ' hp10');
-            controls.appendChild(hp10Label);
+            controls.appendChild(hp10Button);
           } else {
             unit.hp10 = false;
           }
