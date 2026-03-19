@@ -268,6 +268,10 @@
         return hasSkill(name, 'splash') || hasSkill(name, 'explode') || hasSkill(name, 'stomp');
       }
 
+      function canExplode(name) {
+        return hasSkill(name, 'explode');
+      }
+
       function canWall(name) {
         return hasSkill(name, 'fortify');
       }
@@ -594,16 +598,11 @@
           controls.className = 'controls';
           if (side === 'attackers') {
             if (canSplash(unit.name)) {
-              const splashLabel = document.createElement('label');
-              const splashInput = document.createElement('input');
-              splashInput.type = 'checkbox';
-              splashInput.checked = Boolean(unit.splash);
-              splashInput.addEventListener('change', () => {
-                unit.splash = splashInput.checked;
+              const splashButton = createToggleButton('splash', Boolean(unit.splash), () => {
+                unit.splash = !unit.splash;
                 renderAll();
               });
-              splashLabel.append(splashInput, ' splash');
-              controls.appendChild(splashLabel);
+              controls.appendChild(splashButton);
             }
             unit.splash = Boolean(unit.splash && canSplash(unit.name));
           } else {
@@ -705,6 +704,35 @@
 
         const { attackerUnits, defenderUnits } = buildCombatUnits();
 
+        const attackerUnits = state.attackers
+          .map((u) => {
+          const snapshot = makeUnitSnapshot(u.name, u);
+          if (!snapshot) return null;
+          return {
+            ...snapshot,
+              hp: clampHp(u.hp, snapshot.maxHp),
+              splash: Boolean(u.splash && canSplash(u.name)),
+              explode: canExplode(u.name),
+              poison: canPoison(u.name),
+            };
+          })
+          .filter(Boolean);
+
+        const defenderUnits = state.defenders
+          .map((u) => {
+          const snapshot = makeUnitSnapshot(u.name, u);
+          if (!snapshot) return null;
+            const mode = normalizeDefenseModeForUnit(u.name, u.defenseMode);
+            const pois = Boolean(u.pois);
+            return {
+              ...snapshot,
+              hp: clampHp(u.hp, snapshot.maxHp),
+              defenseMode: mode,
+              pois,
+            };
+          })
+          .filter(Boolean);
+
         const rounds = [];
         let defenderIndex = 0;
         attackerUnits.forEach((attacker, attackerIndex) => {
@@ -731,6 +759,9 @@
           attacker.hp = result.attackerHp;
           target.hp = result.defenderHp;
           if (attacker.poison && target.hp > 0) {
+            target.pois = true;
+          }
+          if (attacker.explode && result.attackDamageRaw > 0 && target.hp > 0) {
             target.pois = true;
           }
           const defenderPoisonedThisRound = !defenderPoisonedBefore && target.pois;
