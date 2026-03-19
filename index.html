@@ -200,6 +200,32 @@
         def: 'def',
         wall: 'wall',
       };
+      const PRIORITY_UNIT_GROUPS = [
+        {
+          label: 'Normal',
+          names: ['Warrior', 'Rider', 'Defender', 'Swordsman', 'Catapult', 'Knight', 'Giant'],
+        },
+        {
+          label: 'Naval',
+          names: ['Scout', 'Rammer', 'Bomber', 'Juggernaut'],
+        },
+        {
+          label: 'Elyrion',
+          names: ['Polytaur', 'Baby Dragon', 'Fire Dragon'],
+        },
+        {
+          label: 'Cymanti',
+          names: ['Hexapod', 'Exida', 'Doomux', 'Centipede', 'Segment'],
+        },
+        {
+          label: 'Polaris',
+          names: ['Gaami', 'Battle Sled'],
+        },
+        {
+          label: 'Aquarion',
+          names: ['Tridention', 'Crab', 'Shark', 'Jelly'],
+        },
+      ];
 
       function hasSkill(name, skill) {
         const unit = unitMap.get(name);
@@ -640,6 +666,16 @@
       }
 
       function populateSelectors() {
+        const unitsSortedByName = [...units].sort((a, b) => a.name.localeCompare(b.name));
+
+        function appendOption(parent, unit) {
+          const option = document.createElement('option');
+          option.value = unit.name;
+          const hpText = Number.isFinite(unit.health) ? unit.health : '15/10';
+          option.textContent = `${unit.name} (HP ${hpText}, ATK ${unit.attack}, DEF ${unit.defence})`;
+          parent.appendChild(option);
+        }
+
         for (const select of [attackerSelect, defenderSelect]) {
           select.innerHTML = '';
           const placeholder = document.createElement('option');
@@ -648,13 +684,25 @@
           placeholder.selected = true;
           select.appendChild(placeholder);
 
-          units.forEach((unit) => {
-            const option = document.createElement('option');
-            option.value = unit.name;
-            const hpText = Number.isFinite(unit.health) ? unit.health : '15/10';
-            option.textContent = `${unit.name} (HP ${hpText}, ATK ${unit.attack}, DEF ${unit.defence})`;
-            select.appendChild(option);
+          PRIORITY_UNIT_GROUPS.forEach((group) => {
+            const optgroup = document.createElement('optgroup');
+            optgroup.label = group.label;
+            group.names.forEach((name) => {
+              const unit = unitMap.get(name);
+              if (!unit) return;
+              appendOption(optgroup, unit);
+            });
+            if (optgroup.childElementCount > 0) {
+              select.appendChild(optgroup);
+            }
           });
+
+          const alphabeticalOptgroup = document.createElement('optgroup');
+          alphabeticalOptgroup.label = 'Alphabetical';
+          unitsSortedByName.forEach((unit) => {
+            appendOption(alphabeticalOptgroup, unit);
+          });
+          select.appendChild(alphabeticalOptgroup);
         }
       }
 
