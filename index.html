@@ -51,14 +51,24 @@
         margin: 0;
       }
       li {
-        border: 1px solid #e5e7eb;
+        border: 1px solid #b8c2cf;
+        background: #f8fafc;
         border-radius: 6px;
         padding: 0.45rem;
         display: grid;
-        grid-template-columns: minmax(220px, 1fr) auto auto auto auto;
+        grid-template-columns: minmax(220px, 1fr) auto auto auto;
         align-items: center;
         gap: 0.5rem;
         margin-bottom: 0.45rem;
+      }
+      .unit-summary {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+      }
+      .unit-final {
+        font-weight: 600;
       }
       .table-container {
         width: 100%;
@@ -97,6 +107,15 @@
       .move-controls {
         display: flex;
         gap: 0.3rem;
+        white-space: nowrap;
+      }
+      .end-controls {
+        display: inline-flex;
+        gap: 0.3rem;
+        white-space: nowrap;
+      }
+      .row-break {
+        white-space: pre-line;
       }
       table {
         width: 100%;
@@ -167,12 +186,14 @@
         .move-controls {
           justify-content: flex-start;
         }
+        .end-controls {
+          justify-self: flex-start;
+        }
         .hp-input {
           width: 100%;
         }
         th,
         td {
-          white-space: nowrap;
           font-size: 0.92rem;
         }
       }
@@ -184,20 +205,20 @@
 
     <div class="layout">
       <section class="panel">
+        <h2>Defenders</h2>
+        <div class="row">
+          <select id="defenderSelect"></select>
+        </div>
+        <ul id="defenderList"></ul>
+      </section>
+
+      <section class="panel">
         <h2>Attackers</h2>
         <div class="row">
           <select id="attackerSelect"></select>
           <button id="maximizeAttackersButton" type="button">Maximize</button>
         </div>
         <ul id="attackerList"></ul>
-      </section>
-
-      <section class="panel">
-        <h2>Defenders</h2>
-        <div class="row">
-          <select id="defenderSelect"></select>
-        </div>
-        <ul id="defenderList"></ul>
       </section>
     </div>
 
@@ -208,10 +229,10 @@
         <thead>
           <tr>
             <th>#</th>
-            <th>Attacker</th>
-            <th>Attacker Damage</th>
             <th>Defender</th>
             <th>Defender Damage</th>
+            <th>Attacker</th>
+            <th>Attacker Damage</th>
           </tr>
         </thead>
         <tbody id="resultBody"></tbody>

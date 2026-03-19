@@ -316,10 +316,13 @@ const state = {
         return new Map(entries.map((unit) => [unit.id, unit]));
       }
 
-      function formatEditableUnitSummary(unit, hpCurrent, hpFinal) {
-        const current = Math.max(0, Math.round(hpCurrent));
+      function formatEditableUnitSummary(unit) {
+        return `${unit.name} (H${unit.maxHp},A${unit.attack},D${unit.defense})`;
+      }
+
+      function formatFinalHpText(hpFinal) {
         const final = Number.isFinite(hpFinal) ? Math.max(0, Math.round(hpFinal)) : '-';
-        return `${unit.name} (H${unit.maxHp},A${unit.attack},D${unit.defense}) →${final}`;
+        return `→${final}`;
       }
 
       function renderGroup(container, group, side, outcome) {
@@ -335,12 +338,7 @@ const state = {
 
           const left = document.createElement('div');
           const label = document.createElement('div');
-          label.textContent = formatEditableUnitSummary(snapshot, unit.hp, predictedFinalHp);
-          if (finalUnit && finalUnit.hp <= 0) {
-            label.classList.add('unit-final-dead');
-          } else if (finalUnit && finalUnit.pois) {
-            label.classList.add('unit-final-poisoned');
-          }
+          label.textContent = formatEditableUnitSummary(snapshot);
           const meta = document.createElement('div');
           meta.className = 'unit-meta';
           left.append(label);
@@ -348,6 +346,8 @@ const state = {
             left.append(meta);
           }
 
+          const hpContainer = document.createElement('div');
+          hpContainer.className = 'unit-summary';
           const hpInput = document.createElement('input');
           hpInput.className = 'hp-input';
           hpInput.type = 'number';
@@ -359,6 +359,15 @@ const state = {
             unit.hp = clampUnitHp(value, snapshot.maxHp);
             renderAll();
           });
+          const finalText = document.createElement('span');
+          finalText.className = 'unit-final';
+          finalText.textContent = formatFinalHpText(predictedFinalHp);
+          if (finalUnit && finalUnit.hp <= 0) {
+            finalText.classList.add('unit-final-dead');
+          } else if (finalUnit && finalUnit.pois) {
+            finalText.classList.add('unit-final-poisoned');
+          }
+          hpContainer.append(hpInput, finalText);
 
           const controls = document.createElement('div');
           controls.className = 'controls';
@@ -460,7 +469,11 @@ const state = {
             renderAll();
           });
 
-          li.append(left, hpInput, controls, moveControls, removeButton);
+          const endControls = document.createElement('div');
+          endControls.className = 'end-controls';
+          endControls.append(moveControls, removeButton);
+
+          li.append(left, hpContainer, controls, endControls);
           container.appendChild(li);
         });
 
@@ -588,10 +601,10 @@ const state = {
             : (round.defenderPoisoned ? 'event-poisoned' : '');
           tr.innerHTML = `
             <td>${round.index}</td>
-            <td class="${attackerClass}">${round.attackerLabel}</td>
-            <td>${round.attackerDamageText}</td>
             <td class="${defenderClass}">${round.defenderLabel}</td>
-            <td>${round.defenderDamageText}</td>
+            <td class="row-break">${round.defenderDamageText}</td>
+            <td class="${attackerClass}">${round.attackerLabel}</td>
+            <td class="row-break">${round.attackerDamageText}</td>
           `;
           resultBody.appendChild(tr);
         });
