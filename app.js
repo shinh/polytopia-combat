@@ -344,7 +344,9 @@ const state = {
           }
 
           const left = document.createElement('div');
+          left.className = 'unit-header';
           const label = document.createElement('div');
+          label.className = 'unit-label';
           label.textContent = formatEditableUnitSummary(snapshot);
           const meta = document.createElement('div');
           meta.className = 'unit-meta';
@@ -375,6 +377,7 @@ const state = {
             finalText.classList.add('unit-final-poisoned');
           }
           hpContainer.append(hpInput, finalText);
+          left.append(hpContainer);
 
           const controls = document.createElement('div');
           controls.className = 'controls';
@@ -446,16 +449,20 @@ const state = {
           const moveControls = document.createElement('div');
           moveControls.className = 'move-controls';
           const upButton = document.createElement('button');
+          upButton.className = 'icon-button-sm';
           upButton.textContent = '↑';
           upButton.title = 'Move up';
           upButton.disabled = index === 0;
           upButton.addEventListener('click', () => moveUnit(group, index, -1));
 
           const downButton = document.createElement('button');
+          downButton.classList.add('icon-button-sm');
           if (side === 'attackers' && index === group.length - 1) {
             downButton.textContent = 'K';
             downButton.title = 'Keep this unit at the end when maximizing';
-            downButton.className = unit.keepLastOnMaximize ? 'toggle-button is-active' : 'toggle-button';
+            downButton.className = unit.keepLastOnMaximize
+              ? 'toggle-button is-active icon-button-sm'
+              : 'toggle-button icon-button-sm';
             downButton.setAttribute('aria-pressed', String(Boolean(unit.keepLastOnMaximize)));
             downButton.addEventListener('click', () => {
               unit.keepLastOnMaximize = !unit.keepLastOnMaximize;
@@ -470,6 +477,7 @@ const state = {
           moveControls.append(upButton, downButton);
 
           const removeButton = document.createElement('button');
+          removeButton.className = 'icon-button-sm';
           removeButton.textContent = '✕';
           removeButton.addEventListener('click', () => {
             group.splice(index, 1);
@@ -480,7 +488,11 @@ const state = {
           endControls.className = 'end-controls';
           endControls.append(moveControls, removeButton);
 
-          li.append(left, hpContainer, controls, endControls);
+          const actionsRow = document.createElement('div');
+          actionsRow.className = 'actions-row';
+          actionsRow.append(controls, endControls);
+
+          li.append(left, actionsRow);
           container.appendChild(li);
         });
 
