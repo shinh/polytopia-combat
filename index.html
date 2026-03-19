@@ -65,10 +65,19 @@
         display: flex;
         align-items: center;
         gap: 0.4rem;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
       }
       .unit-final {
         font-weight: 600;
+      }
+      .unit-row-neutral {
+        background: #eff6ff;
+      }
+      .unit-row-dead {
+        background: #fee4e2;
+      }
+      .unit-row-poisoned {
+        background: #ecfdf3;
       }
       .table-container {
         width: 100%;
@@ -190,7 +199,7 @@
           justify-self: flex-start;
         }
         .hp-input {
-          width: 100%;
+          width: 4.4rem;
         }
         th,
         td {
