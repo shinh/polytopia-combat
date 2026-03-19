@@ -214,6 +214,16 @@
         return hasSkill(name, 'fortify');
       }
 
+      function canVet(name) {
+        const unit = unitMap.get(name);
+        return Boolean(unit && unit.veteran);
+      }
+
+      function canHp10(name) {
+        const unit = unitMap.get(name);
+        return Boolean(unit && unit.health === null);
+      }
+
       function calcDefenseBonus(defenseMode, pois) {
         const table = pois
           ? { na: 0.5, def: 0.7, wall: 2 }
@@ -245,7 +255,7 @@
           .map((item) => item.trim())
           .filter(Boolean)
           .map((item) => {
-            const [encodedName, hpRaw, p3, p4] = item.split(':');
+            const [encodedName, hpRaw, p3, p4, p5, p6] = item.split(':');
             const name = decodeURIComponent(encodedName || '');
             const hp = Number.parseFloat(hpRaw);
 
@@ -254,6 +264,8 @@
                 name,
                 hp,
                 splash: p3 === '1',
+                vet: p4 === '1',
+                hp10: p5 === '1',
               };
             }
 
@@ -262,6 +274,8 @@
               hp,
               defenseMode: p3 || DEFENSE_MODES.na,
               pois: p4 === '1',
+              vet: p5 === '1',
+              hp10: p6 === '1',
             };
           })
           .filter((u) => u.name);
@@ -273,11 +287,11 @@
             const encodedName = encodeURIComponent(unit.name);
             const hp = Math.max(0, unit.hp);
             if (side === 'attackers') {
-              return `${encodedName}:${hp}:${unit.splash ? '1' : '0'}`;
+              return `${encodedName}:${hp}:${unit.splash ? '1' : '0'}:${unit.vet ? '1' : '0'}:${unit.hp10 ? '1' : '0'}`;
             }
 
             const defenseMode = normalizeDefenseModeForUnit(unit.name, unit.defenseMode || DEFENSE_MODES.na);
-            return `${encodedName}:${hp}:${defenseMode}:${unit.pois ? '1' : '0'}`;
+            return `${encodedName}:${hp}:${defenseMode}:${unit.pois ? '1' : '0'}:${unit.vet ? '1' : '0'}:${unit.hp10 ? '1' : '0'}`;
           })
           .join(',');
       }
@@ -291,10 +305,12 @@
         shareUrl.textContent = window.location.href;
       }
 
-      function makeUnitSnapshot(name) {
+      function makeUnitSnapshot(name, options = {}) {
         const base = unitMap.get(name);
         if (!base) return null;
-        return { name: base.name, hp: base.health, maxHp: base.health, attack: base.attack, defense: base.defence };
+        const hpBase = Number.isFinite(base.health) ? base.health : (options.hp10 ? 10 : 15);
+        const maxHp = options.vet && base.veteran ? hpBase * 1.5 : hpBase;
+        return { name: base.name, hp: maxHp, maxHp, attack: base.attack, defense: base.defence };
       }
 
       function clampHp(hp, maxHp) {
@@ -314,7 +330,7 @@
         container.innerHTML = '';
         group.forEach((unit, index) => {
           const li = document.createElement('li');
-          const snapshot = makeUnitSnapshot(unit.name);
+          const snapshot = makeUnitSnapshot(unit.name, unit);
           if (!snapshot) return;
 
           const left = document.createElement('div');
@@ -392,6 +408,44 @@
             controls.append('defense ', defenseSelect, poisLabel);
           }
 
+          if (canVet(unit.name)) {
+            const vetLabel = document.createElement('label');
+            const vetInput = document.createElement('input');
+            vetInput.type = 'checkbox';
+            vetInput.checked = Boolean(unit.vet);
+            vetInput.addEventListener('change', () => {
+              unit.vet = vetInput.checked;
+              const nextSnapshot = makeUnitSnapshot(unit.name, unit);
+              if (nextSnapshot) {
+                unit.hp = clampHp(unit.hp, nextSnapshot.maxHp);
+              }
+              renderAll();
+            });
+            vetLabel.append(vetInput, ' vet');
+            controls.appendChild(vetLabel);
+          } else {
+            unit.vet = false;
+          }
+
+          if (canHp10(unit.name)) {
+            const hp10Label = document.createElement('label');
+            const hp10Input = document.createElement('input');
+            hp10Input.type = 'checkbox';
+            hp10Input.checked = Boolean(unit.hp10);
+            hp10Input.addEventListener('change', () => {
+              unit.hp10 = hp10Input.checked;
+              const nextSnapshot = makeUnitSnapshot(unit.name, unit);
+              if (nextSnapshot) {
+                unit.hp = clampHp(unit.hp, nextSnapshot.maxHp);
+              }
+              renderAll();
+            });
+            hp10Label.append(hp10Input, ' hp10');
+            controls.appendChild(hp10Label);
+          } else {
+            unit.hp10 = false;
+          }
+
           const moveControls = document.createElement('div');
           moveControls.className = 'move-controls';
           const upButton = document.createElement('button');
@@ -408,7 +462,7 @@
           moveControls.append(upButton, downButton);
 
           const removeButton = document.createElement('button');
-          removeButton.textContent = 'Remove';
+          removeButton.textContent = 'DEL';
           removeButton.addEventListener('click', () => {
             group.splice(index, 1);
             renderAll();
@@ -432,10 +486,10 @@
 
         const attackerUnits = state.attackers
           .map((u) => {
-            const snapshot = makeUnitSnapshot(u.name);
-            if (!snapshot) return null;
-            return {
-              ...snapshot,
+          const snapshot = makeUnitSnapshot(u.name, u);
+          if (!snapshot) return null;
+          return {
+            ...snapshot,
               hp: clampHp(u.hp, snapshot.maxHp),
               splash: Boolean(u.splash && canSplash(u.name)),
             };
@@ -444,8 +498,8 @@
 
         const defenderUnits = state.defenders
           .map((u) => {
-            const snapshot = makeUnitSnapshot(u.name);
-            if (!snapshot) return null;
+          const snapshot = makeUnitSnapshot(u.name, u);
+          if (!snapshot) return null;
             const mode = normalizeDefenseModeForUnit(u.name, u.defenseMode);
             const pois = Boolean(u.pois);
             return {
@@ -552,9 +606,9 @@
         if (!snapshot) return;
 
         if (side === 'attackers') {
-          state.attackers.push({ name: snapshot.name, hp: snapshot.maxHp, splash: false });
+          state.attackers.push({ name: snapshot.name, hp: snapshot.maxHp, splash: false, vet: false, hp10: false });
         } else {
-          state.defenders.push({ name: snapshot.name, hp: snapshot.maxHp, defenseMode: DEFENSE_MODES.na, pois: false });
+          state.defenders.push({ name: snapshot.name, hp: snapshot.maxHp, defenseMode: DEFENSE_MODES.na, pois: false, vet: false, hp10: false });
         }
 
         renderAll();
@@ -563,25 +617,29 @@
       function hydrateFromUrlAgainstUnits() {
         state.attackers = state.attackers
           .map((u) => {
-            const base = makeUnitSnapshot(u.name);
+            const base = makeUnitSnapshot(u.name, u);
             if (!base) return null;
             return {
               name: u.name,
               hp: Number.isNaN(u.hp) ? base.maxHp : clampHp(Math.round(u.hp), base.maxHp),
               splash: Boolean(u.splash && canSplash(u.name)),
+              vet: Boolean(u.vet && canVet(u.name)),
+              hp10: Boolean(u.hp10 && canHp10(u.name)),
             };
           })
           .filter(Boolean);
 
         state.defenders = state.defenders
           .map((u) => {
-            const base = makeUnitSnapshot(u.name);
+            const base = makeUnitSnapshot(u.name, u);
             if (!base) return null;
             return {
               name: u.name,
               hp: Number.isNaN(u.hp) ? base.maxHp : clampHp(Math.round(u.hp), base.maxHp),
               defenseMode: normalizeDefenseModeForUnit(u.name, u.defenseMode || DEFENSE_MODES.na),
               pois: Boolean(u.pois),
+              vet: Boolean(u.vet && canVet(u.name)),
+              hp10: Boolean(u.hp10 && canHp10(u.name)),
             };
           })
           .filter(Boolean);
@@ -599,7 +657,8 @@
           units.forEach((unit) => {
             const option = document.createElement('option');
             option.value = unit.name;
-            option.textContent = `${unit.name} (HP ${unit.health}, ATK ${unit.attack}, DEF ${unit.defence})`;
+            const hpText = Number.isFinite(unit.health) ? unit.health : '15/10';
+            option.textContent = `${unit.name} (HP ${hpText}, ATK ${unit.attack}, DEF ${unit.defence})`;
             select.appendChild(option);
           });
         }
@@ -610,7 +669,7 @@
           throw new Error('units.json script data is missing.');
         }
 
-        units = window.POLYTOPIA_UNITS_DATA.units.filter((u) => Number.isFinite(u.health));
+        units = window.POLYTOPIA_UNITS_DATA.units;
         unitMap = new Map(units.map((u) => [u.name, u]));
       }
 
