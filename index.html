@@ -702,14 +702,12 @@
           throw new Error('combat.js did not expose calculateCombatExchange.');
         }
 
-        const { attackerUnits, defenderUnits } = buildCombatUnits();
-
         const attackerUnits = state.attackers
           .map((u) => {
-          const snapshot = makeUnitSnapshot(u.name, u);
-          if (!snapshot) return null;
-          return {
-            ...snapshot,
+            const snapshot = makeUnitSnapshot(u.name, u);
+            if (!snapshot) return null;
+            return {
+              ...snapshot,
               hp: clampHp(u.hp, snapshot.maxHp),
               splash: Boolean(u.splash && canSplash(u.name)),
               explode: canExplode(u.name),
@@ -720,8 +718,8 @@
 
         const defenderUnits = state.defenders
           .map((u) => {
-          const snapshot = makeUnitSnapshot(u.name, u);
-          if (!snapshot) return null;
+            const snapshot = makeUnitSnapshot(u.name, u);
+            if (!snapshot) return null;
             const mode = normalizeDefenseModeForUnit(u.name, u.defenseMode);
             const pois = Boolean(u.pois);
             return {
