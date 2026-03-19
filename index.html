@@ -122,6 +122,41 @@
         color: #027a48;
         font-weight: 600;
       }
+      .final-state {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+      }
+      .final-state-box {
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 0.5rem;
+      }
+      .final-state-box h3 {
+        margin: 0 0 0.4rem;
+        font-size: 0.95rem;
+      }
+      .final-state-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .final-state-list li {
+        border: none;
+        border-radius: 0;
+        padding: 0.12rem 0;
+        display: block;
+        margin-bottom: 0;
+      }
+      .final-dead {
+        color: #b42318;
+        font-weight: 700;
+      }
+      .final-poisoned {
+        color: #027a48;
+        font-weight: 700;
+      }
       .mono {
         font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
         word-break: break-all;
@@ -159,6 +194,9 @@
           white-space: nowrap;
           font-size: 0.92rem;
         }
+        .final-state {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </head>
@@ -187,6 +225,7 @@
 
     <section class="panel" style="margin-top: 1rem">
       <h2>Resolution</h2>
+      <div id="finalState" class="final-state"></div>
       <div class="table-container">
         <table>
         <thead>
@@ -223,6 +262,7 @@
       const defenderList = document.getElementById('defenderList');
       const maximizeAttackersButton = document.getElementById('maximizeAttackersButton');
       const resultBody = document.getElementById('resultBody');
+      const finalState = document.getElementById('finalState');
       const shareUrl = document.getElementById('shareUrl');
       const loadError = document.getElementById('loadError');
       const combatEngine = window.POLYTOPIA_COMBAT;
@@ -785,7 +825,11 @@
           });
         });
 
-        return rounds;
+        return {
+          rounds,
+          finalAttackers: attackerUnits,
+          finalDefenders: defenderUnits,
+        };
       }
 
       function formatUnitSummary(unit, hp) {
@@ -796,9 +840,45 @@
         return `${hpBefore} - ${damageRounded} (${damageRaw.toFixed(2)}) => ${hpAfter}`;
       }
 
+      function renderFinalStateList(title, units, emptyText) {
+        const box = document.createElement('section');
+        box.className = 'final-state-box';
+        const heading = document.createElement('h3');
+        heading.textContent = title;
+        const list = document.createElement('ul');
+        list.className = 'final-state-list';
+
+        if (units.length === 0) {
+          const item = document.createElement('li');
+          item.textContent = emptyText;
+          list.appendChild(item);
+        } else {
+          units.forEach((unit) => {
+            const item = document.createElement('li');
+            const hp = Math.max(0, Math.round(unit.hp));
+            item.textContent = `${unit.name}: HP ${hp}/${unit.maxHp}`;
+            if (hp <= 0) {
+              item.classList.add('final-dead');
+            } else if (unit.pois) {
+              item.classList.add('final-poisoned');
+            }
+            list.appendChild(item);
+          });
+        }
+
+        box.append(heading, list);
+        return box;
+      }
+
       function renderResult() {
         resultBody.innerHTML = '';
-        const rounds = computeQueueResult();
+        finalState.innerHTML = '';
+        const outcome = computeQueueResult();
+        const { rounds } = outcome;
+        finalState.append(
+          renderFinalStateList('Attacker Final HP', outcome.finalAttackers, 'No attackers selected'),
+          renderFinalStateList('Defender Final HP', outcome.finalDefenders, 'No defenders selected'),
+        );
 
         rounds.forEach((round) => {
           const tr = document.createElement('tr');
