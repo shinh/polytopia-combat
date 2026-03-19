@@ -171,6 +171,7 @@
         <h2>Attackers</h2>
         <div class="row">
           <select id="attackerSelect"></select>
+          <button id="maximizeAttackersButton" type="button">Maximize</button>
         </div>
         <ul id="attackerList"></ul>
       </section>
@@ -220,6 +221,7 @@
       const defenderSelect = document.getElementById('defenderSelect');
       const attackerList = document.getElementById('attackerList');
       const defenderList = document.getElementById('defenderList');
+      const maximizeAttackersButton = document.getElementById('maximizeAttackersButton');
       const resultBody = document.getElementById('resultBody');
       const shareUrl = document.getElementById('shareUrl');
       const loadError = document.getElementById('loadError');
@@ -390,6 +392,169 @@
         renderAll();
       }
 
+      function calculateAttackOutcome(attacker, defender) {
+        const defenseBonus = calcDefenseBonus(defender.defenseMode, defender.pois);
+        return combatEngine.calculateCombatExchange(
+          attacker,
+          { ...defender, defenseBonus },
+          attacker.splash,
+        );
+      }
+
+      function buildCombatUnits() {
+        const attackerUnits = state.attackers
+          .map((u, index) => {
+            const snapshot = makeUnitSnapshot(u.name, u);
+            if (!snapshot) return null;
+            return {
+              ...snapshot,
+              id: `a-${index}`,
+              hp: clampHp(u.hp, snapshot.maxHp),
+              splash: Boolean(u.splash && canSplash(u.name)),
+              poison: canPoison(u.name),
+            };
+          })
+          .filter(Boolean);
+
+        const defenderUnits = state.defenders
+          .map((u) => {
+            const snapshot = makeUnitSnapshot(u.name, u);
+            if (!snapshot) return null;
+            return {
+              ...snapshot,
+              hp: clampHp(u.hp, snapshot.maxHp),
+              defenseMode: normalizeDefenseModeForUnit(u.name, u.defenseMode),
+              pois: Boolean(u.pois),
+            };
+          })
+          .filter(Boolean);
+
+        return { attackerUnits, defenderUnits };
+      }
+
+      function evaluateOrder(attackerOrder, defenderUnits) {
+        const defenders = defenderUnits.map((u) => ({ ...u }));
+        let defenderIndex = 0;
+        let totalDefenderDamage = 0;
+
+        attackerOrder.forEach((attacker) => {
+          while (defenderIndex < defenders.length && defenders[defenderIndex].hp <= 0) {
+            defenderIndex += 1;
+          }
+          if (defenderIndex >= defenders.length) {
+            return;
+          }
+
+          const target = defenders[defenderIndex];
+          const defenderHpBefore = target.hp;
+          const result = calculateAttackOutcome(attacker, target);
+          attacker.hp = result.attackerHp;
+          target.hp = result.defenderHp;
+          totalDefenderDamage += defenderHpBefore - result.defenderHp;
+          if (attacker.poison && target.hp > 0) {
+            target.pois = true;
+          }
+        });
+
+        return {
+          totalDefenderDamage,
+          defenders,
+          defenderIndex,
+        };
+      }
+
+      function maximizeAttackerOrder() {
+        if (!combatEngine || typeof combatEngine.calculateCombatExchange !== 'function') {
+          throw new Error('combat.js did not expose calculateCombatExchange.');
+        }
+
+        const { attackerUnits, defenderUnits } = buildCombatUnits();
+        if (attackerUnits.length <= 1 || defenderUnits.length === 0) {
+          return;
+        }
+
+        const remaining = attackerUnits.map((unit) => ({ ...unit }));
+        const chosen = [];
+        let currentDefenders = defenderUnits.map((unit) => ({ ...unit }));
+
+        while (remaining.length > 8) {
+          let defenderIndex = 0;
+          while (defenderIndex < currentDefenders.length && currentDefenders[defenderIndex].hp <= 0) {
+            defenderIndex += 1;
+          }
+          if (defenderIndex >= currentDefenders.length) {
+            break;
+          }
+
+          let bestIndex = 0;
+          let bestTuple = [-1, -Infinity, -Infinity];
+          let bestDamage = 0;
+          let bestResult = null;
+
+          remaining.forEach((candidate, idx) => {
+            const defenderClone = { ...currentDefenders[defenderIndex] };
+            const candidateClone = { ...candidate };
+            const result = calculateAttackOutcome(candidateClone, defenderClone);
+            const defenderDamage = defenderClone.hp - result.defenderHp;
+            const tuple = [candidate.poison ? 1 : 0, defenderDamage, -candidate.attack];
+
+            if (
+              tuple[0] > bestTuple[0] ||
+              (tuple[0] === bestTuple[0] && tuple[1] > bestTuple[1]) ||
+              (tuple[0] === bestTuple[0] && tuple[1] === bestTuple[1] && tuple[2] > bestTuple[2])
+            ) {
+              bestIndex = idx;
+              bestTuple = tuple;
+              bestDamage = defenderDamage;
+              bestResult = result;
+            }
+          });
+
+          const picked = remaining.splice(bestIndex, 1)[0];
+          if (!bestResult) {
+            break;
+          }
+
+          const liveDefender = currentDefenders[defenderIndex];
+          liveDefender.hp = bestResult.defenderHp;
+          if (picked.poison && liveDefender.hp > 0) {
+            liveDefender.pois = true;
+          }
+          chosen.push(picked);
+        }
+
+        const tail = remaining;
+        let bestTailOrder = tail.map((unit) => ({ ...unit }));
+        let bestTailDamage = -Infinity;
+
+        function search(available, path) {
+          if (available.length === 0) {
+            const startDefenders = currentDefenders.map((unit) => ({ ...unit }));
+            const pathCopy = path.map((unit) => ({ ...unit }));
+            const outcome = evaluateOrder(pathCopy, startDefenders);
+            if (outcome.totalDefenderDamage > bestTailDamage) {
+              bestTailDamage = outcome.totalDefenderDamage;
+              bestTailOrder = path.map((unit) => ({ ...unit }));
+            }
+            return;
+          }
+
+          for (let i = 0; i < available.length; i += 1) {
+            const next = available[i];
+            const rest = available.slice(0, i).concat(available.slice(i + 1));
+            path.push(next);
+            search(rest, path);
+            path.pop();
+          }
+        }
+
+        search(tail, []);
+        const finalOrder = chosen.concat(bestTailOrder);
+        const currentById = new Map(state.attackers.map((unit, index) => [`a-${index}`, unit]));
+        state.attackers = finalOrder.map((unit) => currentById.get(unit.id)).filter(Boolean);
+        renderAll();
+      }
+
       function createToggleButton(label, active, onClick) {
         const button = document.createElement('button');
         button.type = 'button';
@@ -537,6 +702,8 @@
           throw new Error('combat.js did not expose calculateCombatExchange.');
         }
 
+        const { attackerUnits, defenderUnits } = buildCombatUnits();
+
         const attackerUnits = state.attackers
           .map((u) => {
           const snapshot = makeUnitSnapshot(u.name, u);
@@ -588,11 +755,7 @@
           const defenderHpBefore = target.hp;
           const defenderPoisonedBefore = target.pois;
           const defenseBonus = calcDefenseBonus(target.defenseMode, target.pois);
-          const result = combatEngine.calculateCombatExchange(
-            attacker,
-            { ...target, defenseBonus },
-            attacker.splash,
-          );
+          const result = calculateAttackOutcome(attacker, target);
           attacker.hp = result.attackerHp;
           target.hp = result.defenderHp;
           if (attacker.poison && target.hp > 0) {
@@ -773,6 +936,10 @@
         if (!defenderSelect.value) return;
         appendUnit('defenders', defenderSelect.value);
         defenderSelect.value = '';
+      });
+
+      maximizeAttackersButton.addEventListener('click', () => {
+        maximizeAttackerOrder();
       });
 
       (() => {
