@@ -250,6 +250,10 @@
         return Boolean(unit && unit.health === null);
       }
 
+      function canPoison(name) {
+        return hasSkill(name, 'poison');
+      }
+
       function calcDefenseBonus(defenseMode, pois) {
         const table = pois
           ? { na: 0.5, def: 0.7, wall: 2 }
@@ -364,10 +368,6 @@
           label.textContent = formatUnitSummary(snapshot, unit.hp);
           const meta = document.createElement('div');
           meta.className = 'unit-meta';
-          if (side === 'defenders') {
-            const bonus = calcDefenseBonus(unit.defenseMode, unit.pois);
-            meta.textContent = `bonus: x${bonus}`;
-          }
           left.append(label);
           if (meta.textContent) {
             left.append(meta);
@@ -518,6 +518,7 @@
             ...snapshot,
               hp: clampHp(u.hp, snapshot.maxHp),
               splash: Boolean(u.splash && canSplash(u.name)),
+              poison: canPoison(u.name),
             };
           })
           .filter(Boolean);
@@ -533,7 +534,6 @@
               hp: clampHp(u.hp, snapshot.maxHp),
               defenseMode: mode,
               pois,
-              defenseBonus: calcDefenseBonus(mode, pois),
             };
           })
           .filter(Boolean);
@@ -558,9 +558,17 @@
           const target = defenderUnits[defenderIndex];
           const attackerHpBefore = attacker.hp;
           const defenderHpBefore = target.hp;
-          const result = combatEngine.calculateCombatExchange(attacker, target, attacker.splash);
+          const defenseBonus = calcDefenseBonus(target.defenseMode, target.pois);
+          const result = combatEngine.calculateCombatExchange(
+            attacker,
+            { ...target, defenseBonus },
+            attacker.splash,
+          );
           attacker.hp = result.attackerHp;
           target.hp = result.defenderHp;
+          if (attacker.poison && target.hp > 0) {
+            target.pois = true;
+          }
           rounds.push({
             index: attackerIndex + 1,
             attackerLabel: formatUnitSummary(attacker, attackerHpBefore),
@@ -570,7 +578,7 @@
               result.defenseDamageRaw,
               result.attackerHp,
             ),
-            defenderLabel: formatUnitSummary(target, defenderHpBefore),
+            defenderLabel: `${formatUnitSummary(target, defenderHpBefore)} (bonus x${defenseBonus})`,
             defenderDamageText: formatDamageFlow(
               defenderHpBefore,
               defenderHpBefore - result.defenderHp,
