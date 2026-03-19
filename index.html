@@ -348,6 +348,7 @@
                 splash: p3 === '1',
                 vet: p4 === '1',
                 hp10: p5 === '1',
+                keepLastOnMaximize: p6 === '1',
               };
             }
 
@@ -369,7 +370,7 @@
             const encodedName = encodeURIComponent(unit.name);
             const hp = Math.max(0, unit.hp);
             if (side === 'attackers') {
-              return `${encodedName}:${hp}:${unit.splash ? '1' : '0'}:${unit.vet ? '1' : '0'}:${unit.hp10 ? '1' : '0'}`;
+              return `${encodedName}:${hp}:${unit.splash ? '1' : '0'}:${unit.vet ? '1' : '0'}:${unit.hp10 ? '1' : '0'}:${unit.keepLastOnMaximize ? '1' : '0'}`;
             }
 
             const defenseMode = normalizeDefenseModeForUnit(unit.name, unit.defenseMode || DEFENSE_MODES.na);
@@ -497,7 +498,19 @@
           return;
         }
 
-        const remaining = attackerUnits.map((unit) => ({ ...unit }));
+        const pinnedLastEnabled = Boolean(
+          state.attackers.length > 0 && state.attackers[state.attackers.length - 1].keepLastOnMaximize,
+        );
+        const fixedLastUnit = pinnedLastEnabled ? attackerUnits[attackerUnits.length - 1] : null;
+        const movableAttackers = pinnedLastEnabled
+          ? attackerUnits.slice(0, attackerUnits.length - 1)
+          : attackerUnits;
+
+        if (movableAttackers.length === 0) {
+          return;
+        }
+
+        const remaining = movableAttackers.map((unit) => ({ ...unit }));
         const chosen = [];
         let currentDefenders = defenderUnits.map((unit) => ({ ...unit }));
 
@@ -555,6 +568,9 @@
           if (available.length === 0) {
             const startDefenders = currentDefenders.map((unit) => ({ ...unit }));
             const pathCopy = path.map((unit) => ({ ...unit }));
+            if (fixedLastUnit) {
+              pathCopy.push({ ...fixedLastUnit });
+            }
             const outcome = evaluateOrder(pathCopy, startDefenders);
             if (outcome.totalDefenderDamage > bestTailDamage) {
               bestTailDamage = outcome.totalDefenderDamage;
@@ -573,7 +589,9 @@
         }
 
         search(tail, []);
-        const finalOrder = chosen.concat(bestTailOrder);
+        const finalOrder = fixedLastUnit
+          ? chosen.concat(bestTailOrder, [{ ...fixedLastUnit }])
+          : chosen.concat(bestTailOrder);
         const currentById = new Map(state.attackers.map((unit, index) => [`a-${index}`, unit]));
         state.attackers = finalOrder.map((unit) => currentById.get(unit.id)).filter(Boolean);
         renderAll();
@@ -715,10 +733,21 @@
           upButton.addEventListener('click', () => moveUnit(group, index, -1));
 
           const downButton = document.createElement('button');
-          downButton.textContent = '↓';
-          downButton.title = 'Move down';
-          downButton.disabled = index === group.length - 1;
-          downButton.addEventListener('click', () => moveUnit(group, index, 1));
+          if (side === 'attackers' && index === group.length - 1) {
+            downButton.textContent = 'K';
+            downButton.title = 'Keep this unit at the end when maximizing';
+            downButton.className = unit.keepLastOnMaximize ? 'toggle-button is-active' : 'toggle-button';
+            downButton.setAttribute('aria-pressed', String(Boolean(unit.keepLastOnMaximize)));
+            downButton.addEventListener('click', () => {
+              unit.keepLastOnMaximize = !unit.keepLastOnMaximize;
+              renderAll();
+            });
+          } else {
+            downButton.textContent = '↓';
+            downButton.title = 'Move down';
+            downButton.disabled = index === group.length - 1;
+            downButton.addEventListener('click', () => moveUnit(group, index, 1));
+          }
           moveControls.append(upButton, downButton);
 
           const removeButton = document.createElement('button');
@@ -884,7 +913,14 @@
         if (!snapshot) return;
 
         if (side === 'attackers') {
-          state.attackers.push({ name: snapshot.name, hp: snapshot.maxHp, splash: false, vet: false, hp10: false });
+          state.attackers.push({
+            name: snapshot.name,
+            hp: snapshot.maxHp,
+            splash: false,
+            vet: false,
+            hp10: false,
+            keepLastOnMaximize: false,
+          });
         } else {
           state.defenders.push({ name: snapshot.name, hp: snapshot.maxHp, defenseMode: DEFENSE_MODES.na, pois: false, vet: false, hp10: false });
         }
@@ -903,6 +939,7 @@
               splash: Boolean(u.splash && canSplash(u.name)),
               vet: Boolean(u.vet && canVet(u.name)),
               hp10: Boolean(u.hp10 && canHp10(u.name)),
+              keepLastOnMaximize: Boolean(u.keepLastOnMaximize),
             };
           })
           .filter(Boolean);
