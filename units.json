@@ -90,6 +90,22 @@ window.POLYTOPIA_UNITS_DATA = {
       ]
     },
     {
+      "name": "Bomber",
+      "health": null,
+      "veteran": false,
+      "attack": 3,
+      "defence": 2,
+      "movement": 2,
+      "range": 3,
+      "skills": [
+        "water",
+        "carry",
+        "splash",
+        "stiff",
+        "static"
+      ]
+    },
+    {
       "name": "Bunny",
       "health": 20,
       "veteran": false,
@@ -618,6 +634,21 @@ window.POLYTOPIA_UNITS_DATA = {
       ]
     },
     {
+      "name": "Rammer",
+      "health": null,
+      "veteran": false,
+      "attack": 3,
+      "defence": 3,
+      "movement": 3,
+      "range": 1,
+      "skills": [
+        "water",
+        "dash",
+        "carry",
+        "static"
+      ]
+    },
+    {
       "name": "Raychi",
       "health": 10,
       "veteran": true,
@@ -646,19 +677,22 @@ window.POLYTOPIA_UNITS_DATA = {
     },
     {
       "name": "Scout",
-      "health": 5,
+      "health": null,
       "veteran": false,
-      "attack": 0,
-      "defence": 0,
-      "movement": 2,
-      "range": null,
+      "attack": 2,
+      "defence": 1,
+      "movement": 3,
+      "range": 2,
       "skills": [
+        "water",
+        "dash",
+        "carry",
         "scout",
-        "sneak"
+        "static"
       ]
     },
     {
-      "name": "Scout",
+      "name": "Scout (Removed)",
       "health": 2,
       "veteran": null,
       "attack": null,
