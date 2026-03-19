@@ -704,7 +704,7 @@ const state = {
           const option = document.createElement('option');
           option.value = unit.name;
           const hpText = Number.isFinite(unit.health) ? unit.health : '15/10';
-          option.textContent = `${unit.name} (HP ${hpText}, ATK ${unit.attack}, DEF ${unit.defence})`;
+          option.textContent = `${unit.name} (HP${hpText} ATK${unit.attack} DEF${unit.defence})`;
           parent.appendChild(option);
         }
 
