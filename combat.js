@@ -67,7 +67,7 @@ function calculateCombatExchange(attacker, defender, splash = false) {
 }
 
 function clampHp(hp, maxHp) {
-  return Math.max(0, Math.min(maxHp, hp));
+  return Math.min(maxHp, hp);
 }
 
 function validateUnit(unit, label) {

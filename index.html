@@ -505,9 +505,6 @@
             return {
               ...snapshot,
               hp: clampHp(u.hp, snapshot.maxHp),
-              initialHp: clampHp(u.hp, snapshot.maxHp),
-              hpRaw: clampHp(u.hp, snapshot.maxHp),
-              initialHpRaw: clampHp(u.hp, snapshot.maxHp),
               defenseMode: mode,
               pois,
               defenseBonus: calcDefenseBonus(mode, pois),
@@ -534,27 +531,24 @@
 
           const target = defenderUnits[defenderIndex];
           const attackerHpBefore = attacker.hp;
-          const attackerHpBeforeRaw = attacker.hp;
           const defenderHpBefore = target.hp;
-          const defenderHpBeforeRaw = target.hpRaw;
           const result = combatEngine.calculateCombatExchange(attacker, target, attacker.splash);
           attacker.hp = result.attackerHp;
           target.hp = result.defenderHp;
-          target.hpRaw = result.defenderHpRaw;
           rounds.push({
             index: attackerIndex + 1,
             attackerLabel: formatUnitSummary(attacker, attackerHpBefore),
             attackerDamageText: formatDamageFlow(
               attackerHpBefore,
               attackerHpBefore - result.attackerHp,
-              attackerHpBeforeRaw - result.attackerHpRaw,
+              result.defenseDamageRaw,
               result.attackerHp,
             ),
             defenderLabel: formatUnitSummary(target, defenderHpBefore),
             defenderDamageText: formatDamageFlow(
               defenderHpBefore,
               defenderHpBefore - result.defenderHp,
-              defenderHpBeforeRaw - result.defenderHpRaw,
+              result.attackDamageRaw,
               result.defenderHp,
             ),
           });
