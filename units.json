@@ -692,16 +692,6 @@ window.POLYTOPIA_UNITS_DATA = {
       ]
     },
     {
-      "name": "Scout (Removed)",
-      "health": 2,
-      "veteran": null,
-      "attack": null,
-      "defence": null,
-      "movement": null,
-      "range": null,
-      "skills": []
-    },
-    {
       "name": "Scuba",
       "health": 5,
       "veteran": false,
