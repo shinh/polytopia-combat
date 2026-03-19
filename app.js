@@ -377,7 +377,6 @@ const state = {
             finalText.classList.add('unit-final-poisoned');
           }
           hpContainer.append(hpInput, finalText);
-          left.append(hpContainer);
 
           const controls = document.createElement('div');
           controls.className = 'controls';
@@ -446,6 +445,9 @@ const state = {
             unit.hp10 = false;
           }
 
+          controls.classList.add('unit-controls-inline');
+          left.append(controls);
+
           const moveControls = document.createElement('div');
           moveControls.className = 'move-controls';
           const upButton = document.createElement('button');
@@ -490,7 +492,7 @@ const state = {
 
           const actionsRow = document.createElement('div');
           actionsRow.className = 'actions-row';
-          actionsRow.append(controls, endControls);
+          actionsRow.append(hpContainer, endControls);
 
           li.append(left, actionsRow);
           container.appendChild(li);
