@@ -107,7 +107,7 @@ const state = {
         const base = unitMap.get(name);
         if (!base) return null;
         const hpBase = Number.isFinite(base.health) ? base.health : (options.hp10 ? 10 : 15);
-        const maxHp = options.vet && base.veteran ? hpBase * 1.5 : hpBase;
+        const maxHp = options.vet && base.veteran ? hpBase + 5 : hpBase;
         return { name: base.name, hp: maxHp, maxHp, attack: base.attack, defense: base.defence };
       }
 
