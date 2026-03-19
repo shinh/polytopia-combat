@@ -66,6 +66,7 @@
         align-items: center;
         gap: 0.4rem;
         flex-wrap: wrap;
+        justify-self: end;
       }
       .unit-final {
         font-weight: 600;
@@ -113,6 +114,12 @@
         display: inline-flex;
         gap: 0.3rem;
         white-space: nowrap;
+        justify-self: end;
+      }
+      .icon-button {
+        padding: 0.22rem 0.42rem;
+        font-size: 0.82rem;
+        line-height: 1.15;
       }
       .row-break {
         white-space: pre-line;
@@ -177,20 +184,28 @@
           font-size: 1.1rem;
         }
         li {
-          grid-template-columns: 1fr;
-          align-items: stretch;
+          grid-template-columns: minmax(0, 1fr) auto;
+          align-items: center;
+        }
+        .unit-main {
+          grid-column: 1;
+          min-width: 0;
+        }
+        .unit-summary {
+          grid-column: 2;
+          justify-self: end;
         }
         .controls {
+          grid-column: 1;
           justify-content: flex-start;
-        }
-        .move-controls {
-          justify-content: flex-start;
+          min-width: 0;
         }
         .end-controls {
-          justify-self: flex-start;
+          grid-column: 2;
+          justify-self: end;
         }
         .hp-input {
-          width: 100%;
+          width: 3.5rem;
         }
         th,
         td {

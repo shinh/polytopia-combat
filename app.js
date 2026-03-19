@@ -337,6 +337,7 @@ const state = {
           const predictedFinalHp = finalUnit ? finalUnit.hp : undefined;
 
           const left = document.createElement('div');
+          left.className = 'unit-main';
           const label = document.createElement('div');
           label.textContent = formatEditableUnitSummary(snapshot);
           const meta = document.createElement('div');
@@ -439,16 +440,20 @@ const state = {
           const moveControls = document.createElement('div');
           moveControls.className = 'move-controls';
           const upButton = document.createElement('button');
+          upButton.className = 'icon-button';
           upButton.textContent = '↑';
           upButton.title = 'Move up';
           upButton.disabled = index === 0;
           upButton.addEventListener('click', () => moveUnit(group, index, -1));
 
           const downButton = document.createElement('button');
+          downButton.className = 'icon-button';
           if (side === 'attackers' && index === group.length - 1) {
             downButton.textContent = 'K';
             downButton.title = 'Keep this unit at the end when maximizing';
-            downButton.className = unit.keepLastOnMaximize ? 'toggle-button is-active' : 'toggle-button';
+            downButton.className = unit.keepLastOnMaximize
+              ? 'toggle-button is-active icon-button'
+              : 'toggle-button icon-button';
             downButton.setAttribute('aria-pressed', String(Boolean(unit.keepLastOnMaximize)));
             downButton.addEventListener('click', () => {
               unit.keepLastOnMaximize = !unit.keepLastOnMaximize;
@@ -463,6 +468,7 @@ const state = {
           moveControls.append(upButton, downButton);
 
           const removeButton = document.createElement('button');
+          removeButton.className = 'icon-button';
           removeButton.textContent = '✕';
           removeButton.addEventListener('click', () => {
             group.splice(index, 1);
