@@ -92,6 +92,16 @@
         color: #b42318;
         font-weight: 600;
       }
+      .event-dead {
+        background: #fee4e2;
+        color: #b42318;
+        font-weight: 600;
+      }
+      .event-poisoned {
+        background: #ecfdf3;
+        color: #027a48;
+        font-weight: 600;
+      }
       .mono {
         font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
         word-break: break-all;
@@ -558,6 +568,7 @@
           const target = defenderUnits[defenderIndex];
           const attackerHpBefore = attacker.hp;
           const defenderHpBefore = target.hp;
+          const defenderPoisonedBefore = target.pois;
           const defenseBonus = calcDefenseBonus(target.defenseMode, target.pois);
           const result = combatEngine.calculateCombatExchange(
             attacker,
@@ -569,6 +580,7 @@
           if (attacker.poison && target.hp > 0) {
             target.pois = true;
           }
+          const defenderPoisonedThisRound = !defenderPoisonedBefore && target.pois;
           rounds.push({
             index: attackerIndex + 1,
             attackerLabel: formatUnitSummary(attacker, attackerHpBefore),
@@ -585,6 +597,9 @@
               result.attackDamageRaw,
               result.defenderHp,
             ),
+            attackerDied: result.attackerHp <= 0,
+            defenderDied: result.defenderHp <= 0,
+            defenderPoisoned: defenderPoisonedThisRound,
           });
         });
 
@@ -605,11 +620,15 @@
 
         rounds.forEach((round) => {
           const tr = document.createElement('tr');
+          const attackerClass = round.attackerDied ? 'event-dead' : '';
+          const defenderClass = round.defenderDied
+            ? 'event-dead'
+            : (round.defenderPoisoned ? 'event-poisoned' : '');
           tr.innerHTML = `
             <td>${round.index}</td>
-            <td>${round.attackerLabel}</td>
+            <td class="${attackerClass}">${round.attackerLabel}</td>
             <td>${round.attackerDamageText}</td>
-            <td>${round.defenderLabel}</td>
+            <td class="${defenderClass}">${round.defenderLabel}</td>
             <td>${round.defenderDamageText}</td>
           `;
           resultBody.appendChild(tr);
