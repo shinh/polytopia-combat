@@ -335,6 +335,13 @@ const state = {
           const outcomeId = `${side === 'attackers' ? 'a' : 'd'}-${index}`;
           const finalUnit = outcomeLookup.get(outcomeId);
           const predictedFinalHp = finalUnit ? finalUnit.hp : undefined;
+          if (finalUnit && finalUnit.hp <= 0) {
+            li.classList.add('unit-row-dead');
+          } else if (finalUnit && finalUnit.pois) {
+            li.classList.add('unit-row-poisoned');
+          } else {
+            li.classList.add('unit-row-neutral');
+          }
 
           const left = document.createElement('div');
           const label = document.createElement('div');
