@@ -74,6 +74,26 @@
         align-items: center;
         flex-wrap: wrap;
       }
+      .toggle-group {
+        display: inline-flex;
+        gap: 0.3rem;
+        flex-wrap: wrap;
+      }
+      .toggle-button {
+        border: 1px solid #cbd5e1;
+        border-radius: 999px;
+        background: #f8fafc;
+        color: #111827;
+        cursor: pointer;
+        padding: 0.2rem 0.55rem;
+        font-size: 0.85rem;
+        line-height: 1.35;
+      }
+      .toggle-button.is-active {
+        background: #2563eb;
+        border-color: #2563eb;
+        color: #fff;
+      }
       .move-controls {
         display: flex;
         gap: 0.3rem;
@@ -356,6 +376,16 @@
         renderAll();
       }
 
+      function createToggleButton(label, active, onClick) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = active ? 'toggle-button is-active' : 'toggle-button';
+        button.textContent = label;
+        button.setAttribute('aria-pressed', String(active));
+        button.addEventListener('click', onClick);
+        return button;
+      }
+
       function renderGroup(container, group, side) {
         container.innerHTML = '';
         group.forEach((unit, index) => {
@@ -410,47 +440,33 @@
               : [DEFENSE_MODES.def];
 
             const defenseWrapper = document.createElement('span');
+            defenseWrapper.className = 'toggle-group';
             defenseModes.forEach((mode) => {
-              const modeLabel = document.createElement('label');
-              const modeInput = document.createElement('input');
-              modeInput.type = 'checkbox';
-              modeInput.checked = defenseMode === mode;
-              modeInput.addEventListener('change', () => {
-                unit.defenseMode = modeInput.checked ? mode : DEFENSE_MODES.na;
+              const modeButton = createToggleButton(mode, defenseMode === mode, () => {
+                unit.defenseMode = unit.defenseMode === mode ? DEFENSE_MODES.na : mode;
                 renderAll();
               });
-              modeLabel.append(modeInput, ` ${mode}`);
-              defenseWrapper.append(modeLabel);
+              defenseWrapper.append(modeButton);
             });
 
-            const poisLabel = document.createElement('label');
-            const poisInput = document.createElement('input');
-            poisInput.type = 'checkbox';
-            poisInput.checked = Boolean(unit.pois);
-            poisInput.addEventListener('change', () => {
-              unit.pois = poisInput.checked;
+            const poisButton = createToggleButton('pois', Boolean(unit.pois), () => {
+              unit.pois = !unit.pois;
               renderAll();
             });
-            poisLabel.append(poisInput, ' pois');
 
-            controls.append(defenseWrapper, poisLabel);
+            controls.append(defenseWrapper, poisButton);
           }
 
           if (canVet(unit.name)) {
-            const vetLabel = document.createElement('label');
-            const vetInput = document.createElement('input');
-            vetInput.type = 'checkbox';
-            vetInput.checked = Boolean(unit.vet);
-            vetInput.addEventListener('change', () => {
-              unit.vet = vetInput.checked;
+            const vetButton = createToggleButton('vet', Boolean(unit.vet), () => {
+              unit.vet = !unit.vet;
               const nextSnapshot = makeUnitSnapshot(unit.name, unit);
               if (nextSnapshot) {
                 unit.hp = clampHp(unit.hp, nextSnapshot.maxHp);
               }
               renderAll();
             });
-            vetLabel.append(vetInput, ' vet');
-            controls.appendChild(vetLabel);
+            controls.appendChild(vetButton);
           } else {
             unit.vet = false;
           }
