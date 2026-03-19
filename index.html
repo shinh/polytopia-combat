@@ -151,7 +151,7 @@
       const resultBody = document.getElementById('resultBody');
       const shareUrl = document.getElementById('shareUrl');
       const loadError = document.getElementById('loadError');
-      const combatApi = window.POLYTOPIA_COMBAT;
+      const combatEngine = window.POLYTOPIA_COMBAT;
 
       const DEFENSE_MODES = {
         na: 'na',
@@ -384,7 +384,7 @@
       }
 
       function computeQueueResult() {
-        if (!combatApi || typeof combatApi.calculateCombatExchange !== 'function') {
+        if (!combatEngine || typeof combatEngine.calculateCombatExchange !== 'function') {
           throw new Error('combat.js did not expose calculateCombatExchange.');
         }
 
@@ -441,7 +441,7 @@
           const attackerHpBeforeRaw = attacker.hp;
           const defenderHpBefore = target.hp;
           const defenderHpBeforeRaw = target.hpRaw;
-          const result = combatApi.calculateCombatExchange(attacker, target, attacker.splash);
+          const result = combatEngine.calculateCombatExchange(attacker, target, attacker.splash);
           attacker.hp = result.attackerHp;
           target.hp = result.defenderHp;
           target.hpRaw = result.defenderHpRaw;
