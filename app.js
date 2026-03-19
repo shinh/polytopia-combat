@@ -84,7 +84,7 @@ const state = {
         normalizeDefenseModeForUnit,
         parseGroup,
         serializeGroup,
-        clampHp,
+        clampHp: clampUnitHp,
         applyHpOnMaxChange,
       } = uiLogicFactory({ canWall });
 
@@ -137,7 +137,7 @@ const state = {
             return {
               ...snapshot,
               id: `a-${index}`,
-              hp: clampHp(u.hp, snapshot.maxHp),
+              hp: clampUnitHp(u.hp, snapshot.maxHp),
               splash: Boolean(u.splash && canSplash(u.name)),
               poison: canPoison(u.name),
             };
@@ -150,7 +150,7 @@ const state = {
             if (!snapshot) return null;
             return {
               ...snapshot,
-              hp: clampHp(u.hp, snapshot.maxHp),
+              hp: clampUnitHp(u.hp, snapshot.maxHp),
               defenseMode: normalizeDefenseModeForUnit(u.name, u.defenseMode),
               pois: Boolean(u.pois),
             };
@@ -356,7 +356,7 @@ const state = {
           hpInput.value = String(unit.hp);
           hpInput.addEventListener('change', () => {
             const value = Math.max(0, Math.round(Number.parseFloat(hpInput.value) || 0));
-            unit.hp = clampHp(value, snapshot.maxHp);
+            unit.hp = clampUnitHp(value, snapshot.maxHp);
             renderAll();
           });
 
@@ -483,7 +483,7 @@ const state = {
             return {
               id: `a-${index}`,
               ...snapshot,
-              hp: clampHp(u.hp, snapshot.maxHp),
+              hp: clampUnitHp(u.hp, snapshot.maxHp),
               splash: Boolean(u.splash && canSplash(u.name)),
               explode: canExplode(u.name),
               poison: canPoison(u.name),
@@ -500,7 +500,7 @@ const state = {
             return {
               id: `d-${index}`,
               ...snapshot,
-              hp: clampHp(u.hp, snapshot.maxHp),
+              hp: clampUnitHp(u.hp, snapshot.maxHp),
               defenseMode: mode,
               pois,
             };
@@ -638,7 +638,7 @@ const state = {
             if (!base) return null;
             return {
               name: u.name,
-              hp: Number.isNaN(u.hp) ? base.maxHp : clampHp(Math.round(u.hp), base.maxHp),
+              hp: Number.isNaN(u.hp) ? base.maxHp : clampUnitHp(Math.round(u.hp), base.maxHp),
               splash: Boolean(u.splash && canSplash(u.name)),
               vet: Boolean(u.vet && canVet(u.name)),
               hp10: Boolean(u.hp10 && canHp10(u.name)),
@@ -653,7 +653,7 @@ const state = {
             if (!base) return null;
             return {
               name: u.name,
-              hp: Number.isNaN(u.hp) ? base.maxHp : clampHp(Math.round(u.hp), base.maxHp),
+              hp: Number.isNaN(u.hp) ? base.maxHp : clampUnitHp(Math.round(u.hp), base.maxHp),
               defenseMode: normalizeDefenseModeForUnit(u.name, u.defenseMode || DEFENSE_MODES.na),
               pois: Boolean(u.pois),
               vet: Boolean(u.vet && canVet(u.name)),
