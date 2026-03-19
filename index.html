@@ -598,7 +598,7 @@
       function formatEditableUnitSummary(unit, hpCurrent, hpFinal) {
         const current = Math.max(0, Math.round(hpCurrent));
         const final = Number.isFinite(hpFinal) ? Math.max(0, Math.round(hpFinal)) : '-';
-        return `${unit.name} (H${unit.maxHp},A${unit.attack},D${unit.defense}) [${current}]->${final}`;
+        return `${unit.name} (H${unit.maxHp},A${unit.attack},D${unit.defense}) →${final}`;
       }
 
       function renderGroup(container, group, side, outcome) {
