@@ -321,7 +321,7 @@ const state = {
       }
 
       function formatFinalHpText(hpFinal) {
-        const final = Number.isFinite(hpFinal) ? Math.max(0, Math.round(hpFinal)) : '-';
+        const final = Number.isFinite(hpFinal) ? Math.round(hpFinal) : '-';
         return `→${final}`;
       }
 
