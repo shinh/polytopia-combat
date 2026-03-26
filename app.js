@@ -11,6 +11,7 @@ const state = {
       const attackerList = document.getElementById('attackerList');
       const defenderList = document.getElementById('defenderList');
       const maximizeAttackersButton = document.getElementById('maximizeAttackersButton');
+      const nextTurnLink = document.getElementById('nextTurnLink');
       const resultBody = document.getElementById('resultBody');
       const shareUrl = document.getElementById('shareUrl');
       const loadError = document.getElementById('loadError');
@@ -101,6 +102,70 @@ const state = {
         const next = `${window.location.pathname}?${params.toString()}`;
         history.replaceState(null, '', next);
         shareUrl.textContent = window.location.href;
+      }
+
+      function buildNextTurnState(outcome) {
+        const toRoundedHp = (hp) => Math.max(0, Math.round(Number(hp) || 0));
+        const parseIndex = (id, prefix) => {
+          if (typeof id !== 'string' || !id.startsWith(prefix)) return -1;
+          return Number.parseInt(id.slice(prefix.length), 10);
+        };
+
+        const aliveAttackers = (outcome?.finalAttackers || [])
+          .map((unit) => {
+            const index = parseIndex(unit.id, 'a-');
+            const source = state.attackers[index];
+            if (!source) return null;
+            return {
+              name: source.name,
+              hp: toRoundedHp(unit.hp),
+              vet: Boolean(source.vet),
+              hp10: Boolean(source.hp10),
+            };
+          })
+          .filter((unit) => unit && unit.hp > 0);
+
+        const aliveDefenders = (outcome?.finalDefenders || [])
+          .map((unit) => {
+            const index = parseIndex(unit.id, 'd-');
+            const source = state.defenders[index];
+            if (!source) return null;
+            return {
+              name: source.name,
+              hp: toRoundedHp(unit.hp),
+              vet: Boolean(source.vet),
+              hp10: Boolean(source.hp10),
+            };
+          })
+          .filter((unit) => unit && unit.hp > 0);
+
+        return {
+          attackers: aliveDefenders.map((unit) => ({
+            name: unit.name,
+            hp: unit.hp,
+            splash: false,
+            vet: unit.vet,
+            hp10: unit.hp10,
+            keepLastOnMaximize: false,
+          })),
+          defenders: aliveAttackers.map((unit) => ({
+            name: unit.name,
+            hp: unit.hp,
+            defenseMode: DEFENSE_MODES.na,
+            pois: false,
+            vet: unit.vet,
+            hp10: unit.hp10,
+          })),
+        };
+      }
+
+      function syncNextTurnLink(outcome) {
+        if (!nextTurnLink) return;
+        const nextTurnState = buildNextTurnState(outcome);
+        const params = new URLSearchParams();
+        params.set('a', serializeGroup(nextTurnState.attackers, 'attackers'));
+        params.set('d', serializeGroup(nextTurnState.defenders, 'defenders'));
+        nextTurnLink.href = `${window.location.pathname}?${params.toString()}`;
       }
 
       function makeUnitSnapshot(name, options = {}) {
@@ -643,6 +708,7 @@ const state = {
         renderGroup(defenderList, state.defenders, 'defenders', outcome);
         renderResult(outcome);
         syncUrl();
+        syncNextTurnLink(outcome);
       }
 
       function appendUnit(side, selectedName) {
